@@ -58,17 +58,14 @@ Goal: User can browse categories, open a book, read checkpoints, and resume wher
 - [x] 3.3 Book detail screen — cover, metadata pills, why it matters, Start/Continue button
 - [x] 3.4 Checkpoint reader screen — title, illustration, explanation, key quote, modern example, reflection
 - [x] 3.5 Reader navigation — next button, progress indicator (3/6), bookmark button in fixed bottom bar
-- [ ] 3.6 Auto-save reading progress — update `reading_progress` table on checkpoint transition
-- [x] 3.7 Continue reading from home (UI) — ContinueReadingCard on home screen, needs SQLite wiring
-- [x] 3.8 Checkpoint complete card — checkmark, key takeaway, Continue / Return Home
-- [x] 3.9 Book complete screen — celebration, gains list, next book, Read Next / Explore
-- [x] 3.10 Quote decode card in reader — key quote with dark bg, "What this means" section
-- [ ] 3.11 Update next recommendation after book completion — re-run engine excluding completed books
+- [x] 3.6 Auto-save reading progress — `ProgressService.completeCheckpoint()` called on each "Next" tap in BookReaderFlow
+- [x] 3.7 Continue reading from home — wired to SQLite via `ProgressService.getMostRecentProgress()`, navigates to BookDetailScreen
+- [x] 3.8 Checkpoint complete card — shows real `recapText` from checkpoint data
+- [x] 3.9 Book complete screen — shows checkpoint titles as gains, next book from `nextBookIds`
+- [x] 3.10 Quote decode card in reader — shows real `keyQuote` from checkpoint data
+- [x] 3.11 Update next recommendation after book completion — BookReaderFlow suggests next book from `nextBookIds`
 
-**Dependencies:**
-- 3.6 requires SQLite (1.5, 1.6)
-- 3.7 wiring requires reading_progress queries
-- 3.11 requires recommendation engine (2.10)
+**Phase 3 — COMPLETE**
 
 ---
 
@@ -203,7 +200,7 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 |---|---|---|---|
 | Phase 1 — Foundations | 11 | 11 | 100% |
 | Phase 2 — Onboarding | 13 | 14 | 93% |
-| Phase 3 — Reading | 8 | 11 | 73% |
+| Phase 3 — Reading | 11 | 11 | 100% |
 | Phase 4 — Retention | 5 | 9 | 56% |
 | Phase 5 — Polish | 1 | 11 | 9% |
-| **Total** | **38** | **56** | **68%** |
+| **Total** | **41** | **56** | **73%** |

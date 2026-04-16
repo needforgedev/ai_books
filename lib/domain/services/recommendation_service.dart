@@ -30,11 +30,11 @@ class RecommendationService {
         'introHook': row['intro_hook'],
         'whyItMatters': row['why_it_matters'],
         'shortDescription': row['short_description'],
-        'interestTags': row['interest_tags'] as String,
-        'goalTags': row['goal_tags'] as String,
-        'improvementTags': row['improvement_tags'] as String,
+        'interestTags': row['interest_tags']?.toString() ?? '[]',
+        'goalTags': row['goal_tags']?.toString() ?? '[]',
+        'improvementTags': row['improvement_tags']?.toString() ?? '[]',
         'isFeatured': row['is_featured'],
-        'nextBookIds': row['next_book_ids'] as String,
+        'nextBookIds': row['next_book_ids']?.toString() ?? '[]',
         'sortOrder': row['sort_order'],
       });
     }).toList();

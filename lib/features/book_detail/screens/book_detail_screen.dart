@@ -1,33 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
+import 'package:ai_books/domain/models/models.dart';
+import 'package:ai_books/domain/services/content_service.dart';
+import 'package:ai_books/domain/services/progress_service.dart';
+import 'package:ai_books/features/reader/screens/book_reader_flow.dart';
 
-class BookDetailScreen extends StatelessWidget {
+class BookDetailScreen extends StatefulWidget {
   const BookDetailScreen({
     super.key,
-    required this.bookTitle,
-    required this.author,
-    required this.difficulty,
-    required this.estimatedMinutes,
-    required this.checkpointCount,
-    required this.coverColor,
-    required this.onStartReading,
-    this.isInProgress = false,
-    this.progressPercent = 0,
+    required this.bookId,
   });
 
-  final String bookTitle;
-  final String author;
-  final String difficulty;
-  final int estimatedMinutes;
-  final int checkpointCount;
-  final Color coverColor;
-  final VoidCallback onStartReading;
-  final bool isInProgress;
-  final int progressPercent;
+  final String bookId;
+
+  @override
+  State<BookDetailScreen> createState() => _BookDetailScreenState();
+}
+
+class _BookDetailScreenState extends State<BookDetailScreen> {
+  BookEntry? _book;
+  List<CheckpointEntry> _checkpoints = [];
+  ReadingProgress? _progress;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final book = await ContentService.getBook(widget.bookId);
+    final checkpoints = await ContentService.getCheckpoints(widget.bookId);
+    final progress = await ProgressService.getProgress(widget.bookId);
+    if (!mounted) return;
+    setState(() {
+      _book = book;
+      _checkpoints = checkpoints;
+      _progress = progress;
+      _isLoading = false;
+    });
+  }
+
+  bool get _isInProgress =>
+      _progress != null && _progress!.finishedAt == null;
+
+  int get _progressPercent =>
+      (_progress != null ? (_progress!.completionPercent * 100).round() : 0);
+
+  Future<void> _onStartReading() async {
+    if (_book == null || _checkpoints.isEmpty) return;
+    await ProgressService.startBook(_book!.id, _checkpoints.first.id);
+    if (!mounted) return;
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookReaderFlow(bookId: _book!.id),
+      ),
+    );
+    // Refresh progress when returning from reader
+    if (result == true || result == null) {
+      _loadData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    final book = _book;
+    if (book == null) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        body: Center(
+          child: Text(
+            'Book not found',
+            style: AppTypography.body.copyWith(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
+    // Gather first few checkpoint titles for "What you'll learn"
+    final learnItems = _checkpoints
+        .take(4)
+        .map((cp) => cp.title)
+        .toList();
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -57,8 +124,8 @@ class BookDetailScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.surfaceCard,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                            color: AppColors.border, width: 0.5),
+                        border:
+                            Border.all(color: AppColors.border, width: 0.5),
                       ),
                       child: Center(
                         child: Icon(
@@ -70,61 +137,54 @@ class BookDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     // Title and author
-                    Text(bookTitle, style: AppTypography.sectionHeading),
+                    Text(book.title, style: AppTypography.sectionHeading),
                     const SizedBox(height: 4),
                     Text(
-                      author,
+                      book.author,
                       style: AppTypography.body.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 20),
                     // Metadata pills
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        _MetadataPill(label: difficulty),
-                        const SizedBox(width: 8),
-                        _MetadataPill(label: '$estimatedMinutes min'),
-                        const SizedBox(width: 8),
-                        _MetadataPill(label: '$checkpointCount checkpoints'),
+                        _MetadataPill(label: book.difficulty),
+                        _MetadataPill(
+                            label: '${book.estimatedMinutes} min'),
+                        _MetadataPill(
+                            label:
+                                '${_checkpoints.length} checkpoints'),
                       ],
                     ),
                     const SizedBox(height: 28),
+                    // Short description
+                    if (book.shortDescription != null &&
+                        book.shortDescription!.isNotEmpty) ...[
+                      Text(book.shortDescription!,
+                          style: AppTypography.body),
+                      const SizedBox(height: 28),
+                    ],
                     // Why this book matters
-                    Text('Why this book matters', style: AppTypography.cardTitle),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This book challenges conventional thinking and provides a '
-                      'framework for understanding the world in a fundamentally '
-                      'different way. Drawing on research from psychology, economics, '
-                      'and neuroscience, it offers practical insights that can '
-                      'transform how you make decisions and navigate uncertainty.',
-                      style: AppTypography.body,
-                    ),
-                    const SizedBox(height: 28),
+                    if (book.whyItMatters != null &&
+                        book.whyItMatters!.isNotEmpty) ...[
+                      Text('Why this book matters',
+                          style: AppTypography.cardTitle),
+                      const SizedBox(height: 8),
+                      Text(book.whyItMatters!, style: AppTypography.body),
+                      const SizedBox(height: 28),
+                    ],
                     // What you'll learn
-                    Text("What you'll learn", style: AppTypography.cardTitle),
-                    const SizedBox(height: 12),
-                    _BulletPoint(
-                      text:
-                          'How to identify and overcome common cognitive biases that '
-                          'affect your daily decisions',
-                    ),
-                    _BulletPoint(
-                      text:
-                          'A practical framework for thinking more clearly under '
-                          'pressure and uncertainty',
-                    ),
-                    _BulletPoint(
-                      text:
-                          'Why the stories we tell ourselves shape our reality, and '
-                          'how to rewrite them',
-                    ),
-                    _BulletPoint(
-                      text:
-                          'Strategies for building better habits that stick, backed '
-                          'by behavioral science',
-                    ),
+                    if (learnItems.isNotEmpty) ...[
+                      Text("What you'll learn",
+                          style: AppTypography.cardTitle),
+                      const SizedBox(height: 12),
+                      ...learnItems.map(
+                        (item) => _BulletPoint(text: item),
+                      ),
+                    ],
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -137,7 +197,7 @@ class BookDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: onStartReading,
+                  onPressed: _onStartReading,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.buttonPrimary,
                     foregroundColor: AppColors.textOnPrimary,
@@ -147,8 +207,8 @@ class BookDetailScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    isInProgress
-                        ? 'CONTINUE READING ($progressPercent%)'
+                    _isInProgress
+                        ? 'CONTINUE READING ($_progressPercent%)'
                         : 'START READING',
                     style: AppTypography.buttonLarge,
                   ),

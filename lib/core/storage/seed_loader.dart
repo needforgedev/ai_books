@@ -33,11 +33,26 @@ class SeedLoader {
         await rootBundle.loadString('assets/seed/books.json');
     final List<dynamic> items = json.decode(jsonString) as List<dynamic>;
 
+    // Fields that are JSON arrays in the JSON file but need to be
+    // stored as TEXT strings in SQLite
+    const listFields = [
+      'interest_tags',
+      'goal_tags',
+      'improvement_tags',
+      'next_book_ids',
+    ];
+
     await db.transaction((txn) async {
       for (final item in items) {
+        final row = Map<String, dynamic>.from(item as Map);
+        for (final field in listFields) {
+          if (row[field] is List) {
+            row[field] = json.encode(row[field]);
+          }
+        }
         await txn.insert(
           'books',
-          Map<String, dynamic>.from(item as Map),
+          row,
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
