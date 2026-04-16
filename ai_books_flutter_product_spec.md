@@ -19,8 +19,7 @@ The app should feel:
 The current product direction is:
 
 - user downloads the app
-- user creates an account or logs in
-- user completes a short onboarding
+- user opens the app and completes a short onboarding (no account or login required in v1)
 - onboarding captures interests, goals, areas to improve, reading comfort, and optional streak target
 - app recommends a starter book plus alternate picks based on the user's profile
 - the full library of categories and books is always accessible — recommendations are a starting point, not a gate
@@ -28,6 +27,8 @@ The current product direction is:
 - if the user leaves midway, they can always return to where they left off
 - category difficulty rises over time so the user grows into harder books
 - daily streaks and reminders keep users coming back
+
+The app is fully offline in v1. No internet connection is required. All content is bundled with the app, all data is stored locally on-device, and there is no account system or backend. Authentication and cloud sync can be added in a future version.
 
 This is not a traditional ebook reader, not a full-book reproduction app, and not a heavy game. It is a guided intellectual growth app with light habit mechanics, similar to Blinkist in structure but built for Gen Z in tone, design, and experience.
 
@@ -51,11 +52,13 @@ This is not a traditional ebook reader, not a full-book reproduction app, and no
 ### Non-Goals
 
 - Full book reproduction, PDF/ePub reader, or ebook storefront
+- User accounts, login, or cloud sync in v1 (add later)
 - Open social networking or public discussion feeds in v1
 - Heavy RPG-style mechanics, currencies, or loot systems
 - Open-ended AI chat as the core reading experience in v1
 - Academic exam prep or citation-heavy study tooling as the primary product identity
 - Audiobook or narration pipeline
+- Any internet dependency in v1
 
 ## 3. Audience
 
@@ -117,32 +120,33 @@ Long-term structure:
 - each book contains internal checkpoints for saving progress and organizing the reading flow
 - users can leave a book at any checkpoint and return exactly where they left off
 
+Launch categories:
+
+- `Science`
+- `Business`
+- `Personal Development`
+
 Launch recommendation:
 
-- start with `4-6` categories
-- start with `20-40` books total
+- start with `3` categories
+- start with a few books per category
 - expand categories and depth only after engagement and retention data are visible
 
-Possible categories:
+Future categories (add post-launch based on engagement):
 
 - Philosophy
 - Psychology
 - Self Help
-- Personal Development
 - Spirituality
 - Mindfulness
-- Business
 - Economics
 - History
 - Biography
 - Sociology
 - Religion
-- Science
 - Non-Fiction
 - Poetry
 - Science Fiction
-
-Not every category needs to ship at launch.
 
 ### Category Structure
 
@@ -262,16 +266,17 @@ Suggested tags:
 ## 6. Core Product Loop
 
 1. User downloads the app.
-2. User signs up or logs in.
-3. User completes onboarding (interests, goals, improvement areas, reading comfort, streak challenge).
-4. App recommends one best-fit starter book and two alternate picks based on the user's profile.
-5. User can start the recommended book or browse the full library of categories and books.
-6. User reads simplified book content, progressing through checkpoints in a visual format.
-7. App saves position automatically at each checkpoint — user can leave and return where they left off.
-8. Home screen offers continue-reading, category exploration, and next recommendations.
-9. User completes a book and receives a new recommendation based on progress and profile.
-10. Daily streaks and reminders encourage the user to return each day.
-11. Over time, users move to more difficult books within chosen categories.
+2. User opens the app and completes onboarding (interests, goals, improvement areas, reading comfort, streak challenge). No login required.
+3. App recommends one best-fit starter book and two alternate picks based on the user's profile.
+4. User can start the recommended book or browse the full library of categories and books.
+5. User reads simplified book content, progressing through checkpoints in a visual format.
+6. App saves position automatically at each checkpoint — user can leave and return where they left off.
+7. Home screen offers continue-reading, category exploration, and next recommendations.
+8. User completes a book and receives a new recommendation based on progress and profile.
+9. Daily streaks and local reminders encourage the user to return each day.
+10. Over time, users move to more difficult books within chosen categories.
+
+The entire loop works offline. No internet connection is needed at any point.
 
 ## 7. Brand, Theming, and Graphics
 
@@ -428,7 +433,7 @@ This supports fast re-entry from the home screen.
 
 ### Streak and Reminder Model
 
-Streaks and daily reminders are the primary retention mechanism in v1. Streaks should be optional and supportive, not punishing.
+Streaks and daily reminders are the primary retention mechanism in v1. Streaks should be optional and supportive, not punishing. All reminders are local notifications — no push notification server or internet required.
 
 Suggested rules:
 
@@ -436,7 +441,7 @@ Suggested rules:
 - missing a day does not trigger aggressive guilt messaging
 - optional streak targets can be `7`, `14`, or `30` days
 - streak UI should feel like habit support, not pressure
-- daily reminder notifications (opt-in) encourage users to return
+- daily reminder notifications (opt-in, local only) encourage users to return
 - reminders should reference the user's current book or progress when possible
 
 ### Progress Model
@@ -624,13 +629,12 @@ When a user completes a book, show:
 
 ## 12. Onboarding Flow
 
-The onboarding should be short, high-signal, and useful.
+The onboarding should be short, high-signal, and useful. No account creation or login is required in v1.
 
 Recommended sequence:
 
 - splash
-- welcome
-- auth
+- welcome (introduce the app promise, single "Get Started" action)
 - interests selection
 - goals selection
 - areas to improve
@@ -638,7 +642,7 @@ Recommended sequence:
 - daily time preference
 - optional streak challenge
 - recommendation result
-- enable reminders
+- enable reminders (local notifications)
 - home
 
 ### Onboarding Questions
@@ -737,7 +741,7 @@ Purpose: brand preload and app initialization
 
 ### 13.2 Welcome Screen
 
-Purpose: introduce the app promise
+Purpose: introduce the app promise and start onboarding (no auth)
 
 ```text
 +--------------------------------------------------+
@@ -745,7 +749,7 @@ Purpose: introduce the app promise
 |                                                  |
 | [Editorial illustration / book collage]          |
 |                                                  |
-|        [Create Account]   [Log In]               |
+|              [Get Started]                        |
 +--------------------------------------------------+
 ```
 
@@ -1068,7 +1072,7 @@ Purpose: app and reading controls
 | Text Size         [small/med/large]              |
 | Reduced Motion    [on/off]                       |
 | Dark Mode         [system/light/dark]            |
-| Sign Out          [action]                       |
+| Reset Profile     [action]                       |
 +--------------------------------------------------+
 ```
 
@@ -1094,12 +1098,16 @@ Use a clean layered architecture:
 - `domain`
 - `data`
 
+### Network Requirement
+
+V1 is fully offline. No internet connection is required at any point. There is no backend, no API calls, no remote auth, and no cloud sync. All content is bundled with the app and all user data lives on-device in SQLite.
+
 ### Suggested Flutter Stack
 
 - `flutter_riverpod` for state management
-- `go_router` for navigation
-- `sqflite` or `drift` for SQLite offline persistence
-- `dio` only if remote content sync is added
+- Flutter built-in `Navigator` for navigation (no GoRouter — app is simple enough)
+- `sqflite` for SQLite offline persistence
+- `flutter_local_notifications` for local reminder notifications
 - `freezed` and `json_serializable` for typed models
 
 ### Suggested Project Structure
@@ -1108,17 +1116,15 @@ Use a clean layered architecture:
 lib/
   app/
     app.dart
-    router.dart
     theme/
   core/
     analytics/
     content/
     storage/
-    networking/
+    notifications/
     widgets/
     utils/
   features/
-    auth/
     onboarding/
     home/
     library/
@@ -1134,7 +1140,6 @@ lib/
     services/
   data/
     local/
-    remote/
     seed/
 ```
 
@@ -1142,7 +1147,6 @@ lib/
 
 Keep feature state isolated:
 
-- auth state
 - onboarding state
 - recommendation state
 - home feed state
@@ -1161,8 +1165,7 @@ All book content (categories, books, checkpoints) is stored as structured data i
 
 Persist:
 
-- account basics
-- onboarding responses
+- onboarding responses (user profile)
 - recommendation results cache
 - current reading position per book (checkpoint-level save/resume)
 - completed checkpoints
@@ -1171,13 +1174,162 @@ Persist:
 - bookmarks and saved quotes
 - reminder preferences
 
+### SQLite Schema
+
+#### Table: `user_profile`
+
+Single row. Created during onboarding, updated from profile/settings.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | INTEGER PRIMARY KEY | Always 1 (single local user) |
+| display_name | TEXT | Optional, user can set later |
+| selected_interests | TEXT | JSON array, e.g. `["Science","Business"]` |
+| selected_goals | TEXT | JSON array, e.g. `["build discipline","think more clearly"]` |
+| selected_improvement_areas | TEXT | JSON array, e.g. `["focus","confidence"]` |
+| reading_comfort | TEXT | `beginner`, `moderate`, or `advanced` |
+| daily_time_preference | INTEGER | Minutes: 5, 10, 15, or 20 |
+| streak_goal | INTEGER | 0 (none), 7, 14, or 30 |
+| notification_opt_in | INTEGER | 0 or 1 |
+| onboarding_completed_at | TEXT | ISO 8601 timestamp, NULL if not completed |
+| created_at | TEXT | ISO 8601 |
+| updated_at | TEXT | ISO 8601 |
+
+#### Table: `categories`
+
+Seeded from `categories.json` on first launch.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | TEXT PRIMARY KEY | e.g. `science`, `business`, `personal_development` |
+| title | TEXT NOT NULL | Display name |
+| description | TEXT | Short description for library screen |
+| theme_color | TEXT | Hex color, e.g. `#4A90D9` |
+| icon_asset | TEXT | Asset path for category icon |
+| sort_order | INTEGER | Display order in library |
+
+#### Table: `books`
+
+Seeded from `books.json` on first launch.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | TEXT PRIMARY KEY | e.g. `atomic_habits` |
+| title | TEXT NOT NULL | |
+| subtitle | TEXT | |
+| author | TEXT NOT NULL | |
+| category_id | TEXT NOT NULL | FK → categories.id |
+| difficulty | TEXT | `beginner`, `moderate`, `advanced` |
+| estimated_minutes | INTEGER | Total reading time |
+| cover_image | TEXT | Asset path for cover |
+| intro_hook | TEXT | One-line hook |
+| why_it_matters | TEXT | Why this book is worth reading |
+| short_description | TEXT | 2-3 sentence overview |
+| interest_tags | TEXT | JSON array for recommendation matching |
+| goal_tags | TEXT | JSON array for recommendation matching |
+| improvement_tags | TEXT | JSON array for recommendation matching |
+| is_featured | INTEGER | 0 or 1 |
+| next_book_ids | TEXT | JSON array of book IDs |
+| sort_order | INTEGER | Order within category |
+
+#### Table: `checkpoints`
+
+Seeded from `checkpoints.json` on first launch.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | TEXT PRIMARY KEY | e.g. `atomic_habits_cp1` |
+| book_id | TEXT NOT NULL | FK → books.id |
+| checkpoint_order | INTEGER NOT NULL | 1-based order within book |
+| title | TEXT NOT NULL | e.g. "The Power of Tiny Gains" |
+| checkpoint_type | TEXT | `hook`, `core_idea`, `modern_example`, `interpretation`, `application`, `reflection`, `recap` |
+| hook_text | TEXT | What this section is about |
+| explanation_text | TEXT | Main content — the simplified idea |
+| modern_example | TEXT | How the idea applies today |
+| reflection_prompt | TEXT | Optional self-reflection question |
+| key_quote | TEXT | Notable quote from or about the book |
+| image_asset_or_url | TEXT | Asset path for concept illustration |
+| recap_text | TEXT | Short summary of this checkpoint |
+| estimated_minutes | INTEGER | Reading time for this checkpoint |
+
+#### Table: `reading_progress`
+
+One row per book the user has started.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | |
+| book_id | TEXT NOT NULL UNIQUE | FK → books.id, one row per book |
+| current_checkpoint_id | TEXT | FK → checkpoints.id |
+| completed_checkpoint_ids | TEXT | JSON array of checkpoint IDs |
+| completion_percent | REAL | 0.0 to 1.0 |
+| started_at | TEXT | ISO 8601 |
+| last_opened_at | TEXT | ISO 8601 |
+| finished_at | TEXT | ISO 8601, NULL if not finished |
+
+#### Table: `saved_items`
+
+Bookmarked quotes and checkpoints.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | |
+| type | TEXT NOT NULL | `quote` or `bookmark` |
+| source_book_id | TEXT NOT NULL | FK → books.id |
+| source_checkpoint_id | TEXT | FK → checkpoints.id |
+| saved_text | TEXT | The quote or note text |
+| created_at | TEXT | ISO 8601 |
+
+#### Table: `recommendation_results`
+
+Cached recommendation from onboarding or after book completion.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | |
+| primary_book_id | TEXT NOT NULL | FK → books.id |
+| alternate_book_ids | TEXT | JSON array of book IDs |
+| reason_text | TEXT | Why this was recommended |
+| generated_at | TEXT | ISO 8601 |
+
+#### Table: `streak_records`
+
+One row per day the user had reading activity.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | INTEGER PRIMARY KEY AUTOINCREMENT | |
+| date | TEXT NOT NULL UNIQUE | `YYYY-MM-DD` format |
+| reading_minutes | INTEGER | Minutes read that day |
+| checkpoints_completed | INTEGER | Count of checkpoints finished |
+| created_at | TEXT | ISO 8601 |
+
+#### Indexes
+
+```sql
+CREATE INDEX idx_books_category ON books(category_id);
+CREATE INDEX idx_checkpoints_book ON checkpoints(book_id);
+CREATE INDEX idx_checkpoints_order ON checkpoints(book_id, checkpoint_order);
+CREATE INDEX idx_reading_progress_book ON reading_progress(book_id);
+CREATE INDEX idx_saved_items_book ON saved_items(source_book_id);
+CREATE INDEX idx_streak_records_date ON streak_records(date);
+```
+
+#### Navigation Logic
+
+On app launch, check `user_profile.onboarding_completed_at`:
+
+- If NULL → show onboarding flow
+- If set → show home screen
+
+No GoRouter needed. Use Flutter built-in `Navigator` with this single check.
+
 ### Recommended Runtime Data Objects
 
 #### UserProfile
 
-- id
-- displayName
-- emailOrAuthProvider
+- id (local, auto-generated)
+- displayName (optional, user can set in profile)
 - selectedInterests[]
 - selectedGoals[]
 - selectedImprovementAreas[]
@@ -1185,6 +1337,7 @@ Persist:
 - dailyTimePreference
 - streakGoal
 - notificationOptIn
+- onboardingCompletedAt
 
 #### CategoryEntry
 
@@ -1260,13 +1413,16 @@ Persist:
 
 ### Authentication
 
-For v1, support:
+V1 has no authentication. The app works entirely without accounts, login, or internet.
+
+All user data (profile, progress, bookmarks, streaks) is stored locally on-device. There is one implicit local user.
+
+Future versions can add:
 
 - email login
 - Google login
 - Apple login on iOS
-
-Guest mode can be considered later, but current product direction assumes account creation before personalization.
+- cloud sync and cross-device support
 
 ### Content Ingestion Pipeline
 
@@ -1323,12 +1479,12 @@ Example steps:
 
 ## 16. Safety, Privacy, and Content Rights
 
-- collect minimal user data
+- no user data leaves the device in v1 — fully offline, no analytics server, no backend
+- no accounts, no passwords, no auth tokens to protect
 - do not expose public profiles in v1
 - do not include open messaging
-- make reminder notifications opt-in
-- store sensitive auth details through platform-safe methods
-- allow account deletion and sign-out flows
+- make reminder notifications opt-in (local only)
+- allow profile reset from settings to clear all local data
 
 Content rights note:
 
@@ -1338,9 +1494,9 @@ Content rights note:
 
 ## 17. Analytics to Track
 
-- onboarding start rate
+Since v1 is fully offline, these metrics are tracked locally and available only on-device (e.g., in a debug/admin view or exported manually). Remote analytics can be added when a backend is introduced.
+
 - onboarding completion rate
-- account creation conversion
 - recommendation acceptance rate
 - alternate recommendation selection rate
 - book start rate
@@ -1359,29 +1515,34 @@ Content rights note:
 
 ### MVP Scope
 
-- account creation and login
+- fully offline, no internet required, no accounts or login
 - onboarding with interests, goals, improvement areas, reading comfort, time preference, and optional streak challenge
-- rules-based starter recommendation
+- rules-based starter recommendation using book tags
 - home screen with continue-reading and recommended books
-- category library
+- full category library (always accessible)
 - category detail
 - book detail
-- checkpoint-based reader
-- automatic progress saving
+- checkpoint-based reader with save/resume
+- automatic progress saving at checkpoint level
 - bookmarks or saved quotes
 - profile and streak display
-- local content seed for launch categories and books
+- local content seed for launch categories and books (SQLite)
+- local notification reminders (opt-in)
 
 ### Recommended Launch Scope
 
-- `4-6` categories
-- `20-30` books
+- `3` categories: Science, Business, Personal Development
+- a few books per category to start
 - `4-8` checkpoints per book
-- simple recommendation rules
+- simple tag-based recommendation rules
 - one polished reader format rather than many interaction types
 
 ### Not in MVP
 
+- user accounts, login, or authentication
+- cloud sync or cross-device support
+- any internet dependency
+- push notifications (use local notifications only)
 - open social feeds
 - comments or public discussion
 - heavy gamified economy
@@ -1397,8 +1558,8 @@ Content rights note:
 - app shell
 - router
 - theme system
-- auth setup
-- local content seed structure
+- SQLite database setup
+- local content seed structure (JSON → SQLite)
 
 ### Phase 2 - Onboarding and Profile
 
@@ -1436,15 +1597,15 @@ Content rights note:
 To initialize the Flutter app, build these first:
 
 - router and app shell
-- auth flow
-- onboarding data model
-- `UserProfile` model
-- category, book, and checkpoint seed loaders
-- rules-based recommendation service
+- SQLite database and seed loader
+- onboarding flow and data model
+- `UserProfile` model (local, no auth)
+- category, book, and checkpoint seed loaders (JSON → SQLite)
+- rules-based recommendation service (tag matching)
 - home screen scaffold
 - book detail screen
-- reader screen with checkpoint progress
-- local persistence for reading state
+- reader screen with checkpoint progress and save/resume
+- local persistence for reading state, bookmarks, and streaks
 
 ## 21. Differentiation
 
