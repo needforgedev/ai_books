@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
 import 'package:ai_books/core/widgets/ai_book_card.dart';
+import 'package:ai_books/domain/models/models.dart';
+import 'package:ai_books/domain/services/content_service.dart';
+import 'package:ai_books/features/book_detail/screens/book_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -14,6 +17,9 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'Books';
   bool _hasQuery = false;
+  List<BookEntry> _allBooks = [];
+  List<BookEntry> _results = [];
+  Map<String, CategoryEntry> _categoriesById = {};
 
   static const List<String> _filters = [
     'Books',
@@ -25,16 +31,73 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      final hasText = _searchController.text.isNotEmpty;
-      if (hasText != _hasQuery) {
-        setState(() => _hasQuery = hasText);
-      }
+    _loadBooks();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _loadBooks() async {
+    final books = await ContentService.getAllBooks();
+    final categories = await ContentService.getCategories();
+    final catMap = <String, CategoryEntry>{};
+    for (final cat in categories) {
+      catMap[cat.id] = cat;
+    }
+    if (!mounted) return;
+    setState(() {
+      _allBooks = books;
+      _categoriesById = catMap;
     });
+    _filterResults();
+  }
+
+  void _onSearchChanged() {
+    final hasText = _searchController.text.isNotEmpty;
+    if (hasText != _hasQuery) {
+      setState(() => _hasQuery = hasText);
+    }
+    _filterResults();
+  }
+
+  void _filterResults() {
+    final query = _searchController.text.toLowerCase().trim();
+    if (query.isEmpty) {
+      setState(() => _results = []);
+      return;
+    }
+
+    final filtered = _allBooks.where((book) {
+      switch (_selectedFilter) {
+        case 'Authors':
+          return book.author.toLowerCase().contains(query);
+        case 'Categories':
+          final cat = _categoriesById[book.categoryId];
+          return cat != null &&
+              cat.title.toLowerCase().contains(query);
+        case 'Goals':
+          return book.goalTags
+              .any((tag) => tag.toLowerCase().contains(query));
+        case 'Books':
+        default:
+          return book.title.toLowerCase().contains(query);
+      }
+    }).toList();
+
+    setState(() => _results = filtered);
+  }
+
+  Color _coverColorForBook(BookEntry book) {
+    final cat = _categoriesById[book.categoryId];
+    if (cat != null) {
+      // Parse hex color from category themeColor (e.g. "0xFF4A90D9")
+      final colorValue = int.tryParse(cat.themeColor);
+      if (colorValue != null) return Color(colorValue);
+    }
+    return AppColors.primary;
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -104,6 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     selected: isSelected,
                     onSelected: (selected) {
                       setState(() => _selectedFilter = filter);
+                      _filterResults();
                     },
                     labelStyle: AppTypography.caption.copyWith(
                       color: isSelected
@@ -160,68 +224,50 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildResults() {
-    final results = [
-      _BookResult(
-        title: 'Thinking, Fast and Slow',
-        author: 'Daniel Kahneman',
-        color: AppColors.scienceColor,
-        difficulty: 'Intermediate',
-        minutes: 18,
-      ),
-      _BookResult(
-        title: 'Atomic Habits',
-        author: 'James Clear',
-        color: AppColors.personalDevColor,
-        difficulty: 'Beginner',
-        minutes: 12,
-      ),
-      _BookResult(
-        title: 'The Lean Startup',
-        author: 'Eric Ries',
-        color: AppColors.businessColor,
-        difficulty: 'Beginner',
-        minutes: 15,
-      ),
-      _BookResult(
-        title: 'Sapiens',
-        author: 'Yuval Noah Harari',
-        color: AppColors.scienceColor.withValues(alpha: 0.7),
-        difficulty: 'Intermediate',
-        minutes: 20,
-      ),
-    ];
+    if (_results.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.search_off_rounded,
+              size: 56,
+              color: AppColors.textTertiary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No results found',
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: results.length,
+      itemCount: _results.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final book = results[index];
+        final book = _results[index];
         return AiBookCard(
           title: book.title,
           author: book.author,
-          coverColor: book.color,
+          coverColor: _coverColorForBook(book),
           difficulty: book.difficulty,
-          estimatedMinutes: book.minutes,
-          onTap: () {},
+          estimatedMinutes: book.estimatedMinutes,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BookDetailScreen(bookId: book.id),
+              ),
+            );
+          },
         );
       },
     );
   }
-}
-
-class _BookResult {
-  const _BookResult({
-    required this.title,
-    required this.author,
-    required this.color,
-    required this.difficulty,
-    required this.minutes,
-  });
-
-  final String title;
-  final String author;
-  final Color color;
-  final String difficulty;
-  final int minutes;
 }

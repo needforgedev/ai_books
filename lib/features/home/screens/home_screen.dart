@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final greeting = _displayName.isNotEmpty
         ? 'HELLO ${_displayName.toUpperCase()}'
-        : 'HELLO THERE';
+        : 'HELLO THERE !';
 
     return Scaffold(
       backgroundColor: AppColors.surface,

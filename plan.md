@@ -73,18 +73,16 @@ Goal: User can browse categories, open a book, read checkpoints, and resume wher
 
 Goal: Home screen is the hub. Bookmarks, search, streaks, and reminders work.
 
-- [x] 4.1 Home screen — full build (UI) — greeting, stats, continue reading, recommendations, categories. Needs SQLite wiring
-- [ ] 4.2 Bookmark / save quotes — save to `saved_items` table on bookmark button tap
-- [x] 4.3 Saved screen (UI) — quotes and bookmarks sections with placeholder data. Needs SQLite wiring
-- [x] 4.4 Search screen (UI) — search bar, filter chips, placeholder results. Needs SQLite query wiring
-- [ ] 4.5 Streak tracking logic — insert/update `streak_records`, calculate current streak
-- [ ] 4.6 Local notification reminders — schedule daily local notification, opt-in only
-- [x] 4.7 Settings screen — notifications toggle, text size, reduced motion, dark mode, reset profile
-- [x] 4.8 Reset profile action (UI) — confirmation dialog built. Needs SQLite clear + restart wiring
+- [x] 4.1 Home screen — wired to SQLite: real stats, continue reading, recommendations, categories
+- [x] 4.2 Bookmark / save quotes — `BookmarkService` with toggle, save quote, remove. Wired in reader + bookmarks screen
+- [x] 4.3 Saved screen — wired to SQLite, loads real quotes + bookmarks, swipe-to-dismiss
+- [x] 4.4 Search screen — wired to SQLite, real search by title/author/category/goals
+- [x] 4.5 Streak tracking — `StreakService` records daily activity, calculates consecutive streak days
+- [x] 4.6 Local notification reminders — `NotificationService` with daily periodic reminders, opt-in toggle in settings
+- [x] 4.7 Settings screen — notifications wired to DB + NotificationService, reset profile clears DB + restarts
+- [x] 4.8 Reset profile — clears all SQLite data, re-seeds content, navigates to onboarding
 
-**Dependencies:**
-- Data wiring requires Phase 1 SQLite setup
-- Streaks require reading_progress tracking (3.6)
+**Phase 4 — COMPLETE**
 
 ---
 
@@ -201,6 +199,6 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 | Phase 1 — Foundations | 11 | 11 | 100% |
 | Phase 2 — Onboarding | 13 | 14 | 93% |
 | Phase 3 — Reading | 11 | 11 | 100% |
-| Phase 4 — Retention | 5 | 9 | 56% |
+| Phase 4 — Retention | 9 | 9 | 100% |
 | Phase 5 — Polish | 1 | 11 | 9% |
-| **Total** | **41** | **56** | **73%** |
+| **Total** | **45** | **56** | **80%** |

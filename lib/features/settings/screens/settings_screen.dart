@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
+import 'package:ai_books/core/storage/database_helper.dart';
+import 'package:ai_books/core/storage/seed_loader.dart';
+import 'package:ai_books/core/notifications/notification_service.dart';
+import 'package:ai_books/app/app.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,13 +14,47 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
+  bool _notificationsEnabled = false;
   bool _reducedMotion = false;
   int _textSizeIndex = 1; // 0=Small, 1=Medium, 2=Large
   int _darkModeIndex = 0; // 0=System, 1=Light, 2=Dark
 
   static const _textSizeLabels = ['Small', 'Medium', 'Large'];
   static const _darkModeLabels = ['System', 'Light', 'Dark'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    final db = await DatabaseHelper.instance.database;
+    final results = await db.query('user_profile', limit: 1);
+    if (results.isNotEmpty) {
+      final optIn = results.first['notification_opt_in'] as int? ?? 0;
+      if (mounted) {
+        setState(() => _notificationsEnabled = optIn == 1);
+      }
+    }
+  }
+
+  Future<void> _onNotificationsChanged(bool value) async {
+    setState(() => _notificationsEnabled = value);
+
+    final db = await DatabaseHelper.instance.database;
+    await db.update(
+      'user_profile',
+      {'notification_opt_in': value ? 1 : 0},
+    );
+
+    if (value) {
+      await NotificationService.requestPermission();
+      await NotificationService.scheduleDailyReminder();
+    } else {
+      await NotificationService.cancelAll();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: _notificationsEnabled,
                 activeTrackColor: AppColors.primary,
                 activeThumbColor: AppColors.surface,
-                onChanged: (value) {
-                  setState(() => _notificationsEnabled = value);
-                },
+                onChanged: _onNotificationsChanged,
               ),
               _settingDivider(),
               // Text Size
@@ -190,9 +226,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              // Reset action would go here
+              await DatabaseHelper.instance.clearAllData();
+              final db = await DatabaseHelper.instance.database;
+              await SeedLoader.seedIfNeeded(db);
+              if (!mounted) return;
+              Navigator.of(this.context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const AiBooksApp()),
+                (route) => false,
+              );
             },
             child: Text(
               'Reset',

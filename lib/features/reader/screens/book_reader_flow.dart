@@ -4,6 +4,8 @@ import 'package:ai_books/app/theme/app_typography.dart';
 import 'package:ai_books/domain/models/models.dart';
 import 'package:ai_books/domain/services/content_service.dart';
 import 'package:ai_books/domain/services/progress_service.dart';
+import 'package:ai_books/domain/services/bookmark_service.dart';
+import 'package:ai_books/domain/services/streak_service.dart';
 import 'package:ai_books/features/reader/screens/checkpoint_complete_screen.dart';
 import 'package:ai_books/features/reader/screens/book_complete_screen.dart';
 
@@ -23,6 +25,7 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
   List<CheckpointEntry> _checkpoints = [];
   int _currentCheckpointIndex = 0;
   bool _isLoading = true;
+  bool _isCurrentBookmarked = false;
 
   @override
   void initState() {
@@ -48,13 +51,30 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
       if (idx >= 0) startIndex = idx;
     }
 
+    // Check bookmark state for current checkpoint
+    bool bookmarked = false;
+    if (checkpoints.isNotEmpty) {
+      bookmarked = await BookmarkService.isBookmarked(
+        checkpoints[startIndex].id,
+      );
+    }
+
     if (!mounted) return;
     setState(() {
       _book = book;
       _checkpoints = checkpoints;
       _currentCheckpointIndex = startIndex;
+      _isCurrentBookmarked = bookmarked;
       _isLoading = false;
     });
+  }
+
+  Future<void> _checkBookmarkState() async {
+    final cp = _currentCheckpoint;
+    if (cp == null) return;
+    final bookmarked = await BookmarkService.isBookmarked(cp.id);
+    if (!mounted) return;
+    setState(() => _isCurrentBookmarked = bookmarked);
   }
 
   CheckpointEntry? get _currentCheckpoint {
@@ -83,6 +103,9 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
       nextCheckpointId: nextCpId,
       totalCheckpoints: _checkpoints.length,
     );
+
+    // Record activity for streak tracking
+    await StreakService.recordActivity(additionalCheckpoints: 1);
 
     if (_isLastCheckpoint) {
       // Finish book
@@ -144,6 +167,7 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
         setState(() {
           _currentCheckpointIndex++;
         });
+        _checkBookmarkState();
       }
     }
   }
@@ -327,6 +351,35 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
                                 color: AppColors.textSecondary,
                               ),
                             ),
+                            if (checkpoint.keyQuote != null &&
+                                checkpoint.keyQuote!.isNotEmpty) ...[
+                              const SizedBox(height: 14),
+                              GestureDetector(
+                                onTap: () async {
+                                  if (_book == null) return;
+                                  await BookmarkService.saveQuote(
+                                    bookId: _book!.id,
+                                    checkpointId: checkpoint.id,
+                                    quoteText: checkpoint.keyQuote!,
+                                  );
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Quote saved'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  'SAVE THOUGHT',
+                                  style:
+                                      AppTypography.captionBold.copyWith(
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -349,14 +402,38 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
                 children: [
                   // Bookmark button
                   GestureDetector(
-                    onTap: () {
-                      // Bookmark functionality — placeholder
+                    onTap: () async {
+                      final cp = _currentCheckpoint;
+                      if (cp == null || _book == null) return;
+                      final isNowBookmarked =
+                          await BookmarkService.toggleBookmark(
+                        bookId: _book!.id,
+                        checkpointId: cp.id,
+                      );
+                      if (!mounted) return;
+                      setState(
+                          () => _isCurrentBookmarked = isNowBookmarked);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isNowBookmarked
+                              ? 'Bookmark saved'
+                              : 'Bookmark removed'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
                     },
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 44,
                       height: 44,
-                      child: Icon(Icons.bookmark_outline_rounded,
-                          color: AppColors.textSecondary, size: 22),
+                      child: Icon(
+                        _isCurrentBookmarked
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_outline_rounded,
+                        color: _isCurrentBookmarked
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                        size: 22,
+                      ),
                     ),
                   ),
                   const Spacer(),

@@ -127,26 +127,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               const SizedBox(height: 24),
-              // Avatar
-              const CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.surfaceCard,
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 44,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text('Reader', style: AppTypography.cardTitle),
-              const SizedBox(height: 4),
-              Text(
-                'Joined April 2026',
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 28),
               // Stats row
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
