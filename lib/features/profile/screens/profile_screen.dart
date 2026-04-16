@@ -1,19 +1,124 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
+import 'package:ai_books/core/storage/database_helper.dart';
+import 'package:ai_books/features/profile/screens/edit_interests_screen.dart';
+import 'package:ai_books/features/settings/screens/settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({
-    super.key,
-    this.onEditInterests,
-    this.onReminderSettings,
-  });
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
-  final VoidCallback? onEditInterests;
-  final VoidCallback? onReminderSettings;
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoading = true;
+
+  List<String> _interests = [];
+  List<String> _goals = [];
+  List<String> _improvements = [];
+  String _readingComfort = 'Beginner';
+  int _booksCompleted = 0;
+  int _streakDays = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final db = await DatabaseHelper.instance.database;
+
+    // Load user profile
+    final profileRows = await db.query('user_profile', limit: 1);
+    if (profileRows.isNotEmpty) {
+      final profile = profileRows.first;
+      final interestsRaw = profile['selected_interests'] as String?;
+      final goalsRaw = profile['selected_goals'] as String?;
+      final improvementsRaw = profile['selected_improvement_areas'] as String?;
+      final comfortRaw = profile['reading_comfort'] as String?;
+
+      _interests = _decodeJsonList(interestsRaw);
+      _goals = _decodeJsonList(goalsRaw);
+      _improvements = _decodeJsonList(improvementsRaw);
+      _readingComfort = comfortRaw ?? 'Beginner';
+    }
+
+    // Load books completed count
+    final booksResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM reading_progress WHERE finished_at IS NOT NULL',
+    );
+    _booksCompleted = (booksResult.first['count'] as int?) ?? 0;
+
+    // Load streak days (simple count of streak_records as placeholder)
+    final streakResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM streak_records',
+    );
+    _streakDays = (streakResult.first['count'] as int?) ?? 0;
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<String> _decodeJsonList(String? raw) {
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.cast<String>();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _navigateToEditInterests() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditInterestsScreen(
+          initialInterests: List<String>.from(_interests),
+          initialGoals: List<String>.from(_goals),
+          initialImprovements: List<String>.from(_improvements),
+        ),
+      ),
+    );
+    if (result == true) {
+      _loadProfileData();
+    }
+  }
+
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SettingsScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -51,60 +156,63 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const _StatItem(label: 'Reading Level', value: 'Beginner'),
+                    _StatItem(label: 'Reading Level', value: _readingComfort),
                     _divider(),
-                    const _StatItem(label: 'Streak', value: '7 days'),
+                    _StatItem(
+                      label: 'Streak',
+                      value: '$_streakDays day${_streakDays == 1 ? '' : 's'}',
+                    ),
                     _divider(),
-                    const _StatItem(label: 'Books', value: '4'),
+                    _StatItem(label: 'Books', value: '$_booksCompleted'),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
               // Interests
-              const _SectionHeader(title: 'Interests'),
-              const SizedBox(height: 12),
-              const Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _ProfileChip(label: 'Psychology'),
-                  _ProfileChip(label: 'Science'),
-                  _ProfileChip(label: 'Business'),
-                ],
-              ),
-              const SizedBox(height: 28),
+              if (_interests.isNotEmpty) ...[
+                const _SectionHeader(title: 'Interests'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _interests
+                      .map((label) => _ProfileChip(label: label))
+                      .toList(),
+                ),
+                const SizedBox(height: 28),
+              ],
               // Goals
-              const _SectionHeader(title: 'Goals'),
-              const SizedBox(height: 12),
-              const Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _ProfileChip(label: 'Read 1 book a week'),
-                  _ProfileChip(label: 'Build better habits'),
-                  _ProfileChip(label: 'Think more clearly'),
-                ],
-              ),
-              const SizedBox(height: 28),
-              // Favorite Categories
-              const _SectionHeader(title: 'Favorite Categories'),
-              const SizedBox(height: 12),
-              const Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _ProfileChip(label: 'Self-Improvement'),
-                  _ProfileChip(label: 'Behavioral Science'),
-                  _ProfileChip(label: 'Entrepreneurship'),
-                ],
-              ),
-              const SizedBox(height: 36),
+              if (_goals.isNotEmpty) ...[
+                const _SectionHeader(title: 'Goals'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      _goals.map((label) => _ProfileChip(label: label)).toList(),
+                ),
+                const SizedBox(height: 28),
+              ],
+              // Areas to Improve
+              if (_improvements.isNotEmpty) ...[
+                const _SectionHeader(title: 'Areas to Improve'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _improvements
+                      .map((label) => _ProfileChip(label: label))
+                      .toList(),
+                ),
+                const SizedBox(height: 28),
+              ],
+              const SizedBox(height: 8),
               // Buttons
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton(
-                  onPressed: onEditInterests,
+                  onPressed: _navigateToEditInterests,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
@@ -125,7 +233,7 @@ class ProfileScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton(
-                  onPressed: onReminderSettings,
+                  onPressed: _navigateToSettings,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.border),

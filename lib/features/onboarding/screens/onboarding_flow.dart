@@ -8,6 +8,8 @@ import 'package:ai_books/features/onboarding/screens/reading_comfort_screen.dart
 import 'package:ai_books/features/onboarding/screens/daily_time_screen.dart';
 import 'package:ai_books/features/onboarding/screens/streak_screen.dart';
 import 'package:ai_books/features/onboarding/screens/recommendation_screen.dart';
+import 'package:ai_books/domain/models/book_entry.dart';
+import 'package:ai_books/domain/services/recommendation_service.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({
@@ -33,6 +35,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String _readingComfort = '';
   int _dailyMinutes = 0;
   int _streakDays = 0;
+
+  // Recommendation results
+  BookEntry? _recommendedBook;
+  // ignore: unused_field
+  List<BookEntry> _alternateBooks = [];
+  String _reasonText = '';
 
   @override
   void dispose() {
@@ -128,13 +136,32 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               ),
               // 6: Streak
               StreakScreen(
-                onNext: (days) {
+                onNext: (days) async {
                   _streakDays = days;
+                  // Run recommendation engine before showing the result
+                  final result =
+                      await RecommendationService.getRecommendations(
+                    interests: _interests,
+                    goals: _goals,
+                    improvements: _improvements,
+                    readingComfort: _readingComfort,
+                  );
+                  setState(() {
+                    _recommendedBook = result['primary'] as BookEntry;
+                    _alternateBooks =
+                        List<BookEntry>.from(result['alternates'] as List);
+                    _reasonText = result['reason'] as String;
+                  });
                   _nextPage();
                 },
               ),
               // 7: Recommendation
               RecommendationScreen(
+                bookTitle: _recommendedBook?.title ?? 'Atomic Habits',
+                bookAuthor: _recommendedBook?.author ?? 'James Clear',
+                reasonText: _reasonText.isNotEmpty
+                    ? _reasonText
+                    : 'Because you picked Business + build discipline + beginner-friendly reading',
                 onStartReading: () {
                   widget.onOnboardingComplete(_collectData());
                 },

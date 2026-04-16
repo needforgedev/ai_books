@@ -1,0 +1,26 @@
+[
+  {
+    "id": "science",
+    "title": "Science",
+    "description": "Discover how the universe works",
+    "theme_color": "#4A90D9",
+    "icon_asset": null,
+    "sort_order": 1
+  },
+  {
+    "id": "business",
+    "title": "Business",
+    "description": "Decisions, systems, execution",
+    "theme_color": "#16A34A",
+    "icon_asset": null,
+    "sort_order": 2
+  },
+  {
+    "id": "personal_development",
+    "title": "Personal Development",
+    "description": "Grow your mindset and habits",
+    "theme_color": "#D97706",
+    "icon_asset": null,
+    "sort_order": 3
+  }
+]

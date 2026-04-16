@@ -7,10 +7,17 @@ class RecommendationScreen extends StatefulWidget {
     super.key,
     required this.onStartReading,
     required this.onSeeOtherPicks,
+    this.bookTitle = 'Atomic Habits',
+    this.bookAuthor = 'James Clear',
+    this.reasonText =
+        'Because you picked Business + build discipline + beginner-friendly reading',
   });
 
   final VoidCallback onStartReading;
   final VoidCallback onSeeOtherPicks;
+  final String bookTitle;
+  final String bookAuthor;
+  final String reasonText;
 
   @override
   State<RecommendationScreen> createState() => _RecommendationScreenState();
@@ -54,13 +61,13 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Atomic Habits',
+                widget.bookTitle,
                 style: AppTypography.sectionHeading,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
-                'James Clear',
+                widget.bookAuthor,
                 style: AppTypography.body.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -70,7 +77,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Because you picked Business + build discipline + beginner-friendly reading',
+                  widget.reasonText,
                   style: AppTypography.caption,
                   textAlign: TextAlign.center,
                 ),

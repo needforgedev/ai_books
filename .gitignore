@@ -47,5 +47,5 @@ app.*.map.json
 .agents/
 agents.md
 skills-lock.json
-plan.md
 AGENTS.md
+db-loader-steps.md
