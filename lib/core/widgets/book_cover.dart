@@ -67,7 +67,7 @@ class BookCover extends StatelessWidget {
               children: [
                 Text(
                   category.toUpperCase(),
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.inter(
                     fontSize: subSize,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 1.2,
@@ -79,7 +79,7 @@ class BookCover extends StatelessWidget {
                 Flexible(
                   child: Text(
                     title,
-                    style: GoogleFonts.fraunces(
+                    style: GoogleFonts.spaceGrotesk(
                       fontSize: titleSize,
                       fontWeight: FontWeight.w500,
                       height: 1.02,
@@ -92,7 +92,7 @@ class BookCover extends StatelessWidget {
                 ),
                 Text(
                   author,
-                  style: GoogleFonts.spaceGrotesk(
+                  style: GoogleFonts.inter(
                     fontSize: subSize + 1,
                     letterSpacing: 0.2,
                     color: palette.ink.withValues(alpha: 0.85),

@@ -13,9 +13,9 @@ class AppColors {
   static const Color surfaceInput = Color(0xFF141418);
   static const Color surfaceMuted = Color(0xFF1C1C22);
 
-  // Primary — default lime accent (can be overridden per book)
-  static const Color primary = Color(0xFFC8F24B);
-  static const Color primaryMuted = Color(0xFF9BC23A);
+  // Primary — default crimson accent (can be overridden per book)
+  static const Color primary = Color(0xFFFF3B3B);
+  static const Color primaryMuted = Color(0xFFCC2E2E);
   static const Color primaryDim = Color(0xFFAAAAAA);
 
   // Warm accent (flame/streak)
@@ -37,7 +37,7 @@ class AppColors {
   // Borders
   static const Color border = Color(0x1AFFFFFF); // 10%
   static const Color borderSubtle = Color(0x0FFFFFFF); // 6%
-  static const Color borderFocus = Color(0xFFC8F24B);
+  static const Color borderFocus = Color(0xFFFF3B3B);
 
   // Glass (for floating tab bar)
   static const Color glassBg = Color(0xB8161618);

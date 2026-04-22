@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
 import 'package:ai_books/core/widgets/book_cover.dart';
+import 'package:ai_books/core/widgets/radial_glow.dart';
 import 'package:ai_books/domain/models/book_entry.dart';
 import 'package:ai_books/domain/services/content_service.dart';
 
@@ -47,82 +48,121 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 32),
-              Expanded(
-                flex: 5,
-                child: Center(
-                  child: _loaded && _heroBooks.length >= 3
-                      ? _HeroCovers(books: _heroBooks)
-                      : const SizedBox(height: 220),
-                ),
-              ),
-              const SizedBox(height: 8),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: AppTypography.displayLarge,
-                  children: [
-                    const TextSpan(text: "The world's best books. In "),
-                    TextSpan(
-                      text: 'your',
-                      style: AppTypography.displayItalic(42,
-                          color: AppColors.primary),
-                    ),
-                    const TextSpan(text: ' language.'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Eight checkpoints. Twenty minutes. One big idea you'll actually remember.",
-                style: AppTypography.body,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: widget.onGetStarted,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textOnPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    textStyle: AppTypography.buttonLarge,
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Start the climb',
-                        style: AppTypography.buttonLarge,
+        bottom: false,
+        child: Column(
+          children: [
+            // ===== Hero collage (top half, fills) =====
+            Expanded(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Atmospheric radial glow
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Align(
+                        alignment: const Alignment(0, -0.4),
+                        child: RadialGlow(
+                          color: AppColors.primary,
+                          size: 480,
+                          opacity: 0.18,
+                        ),
                       ),
-                      const SizedBox(width: 10),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 20,
-                        color: AppColors.textOnPrimary,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  // Book collage centered ~ 90px from top
+                  if (_loaded && _heroBooks.length >= 3)
+                    Positioned(
+                      top: 90,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: _HeroCovers(books: _heroBooks),
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 14),
-              Text(
-                'No account needed. Works offline.',
-                style: AppTypography.caption.copyWith(color: AppColors.textMuted),
-                textAlign: TextAlign.center,
+            ),
+            // ===== Bottom content =====
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: AppTypography.displayLarge.copyWith(
+                        fontSize: 42,
+                        height: 1.02,
+                        letterSpacing: -1.4,
+                      ),
+                      children: [
+                        const TextSpan(text: "The world's best books. In "),
+                        TextSpan(
+                          text: 'your',
+                          style: AppTypography.displayItalic(42,
+                              color: AppColors.primary),
+                        ),
+                        const TextSpan(text: ' language.'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    child: Text(
+                      "Eight checkpoints. Twenty minutes. One big idea you'll actually remember.",
+                      style: AppTypography.body.copyWith(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: widget.onGetStarted,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Start the climb',
+                            style: AppTypography.buttonLarge,
+                          ),
+                          const SizedBox(width: 10),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 18,
+                            color: AppColors.textOnPrimary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Center(
+                    child: Text(
+                      'No account needed. Works offline.',
+                      style: AppTypography.caption.copyWith(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -140,14 +180,17 @@ class _HeroCovers extends StatelessWidget {
     final center = books[1];
     final right = books[2];
 
+    // Center cover is taller; others are shorter and rotated outward + dropped.
     return SizedBox(
-      height: 260,
+      height: 235,
       child: Stack(
-        alignment: Alignment.center,
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
         children: [
+          // Left cover: rotated -8°, dropped 20px
           Positioned(
-            left: 8,
-            top: 30,
+            top: 20,
+            right: 130,
             child: Transform.rotate(
               angle: -8 * math.pi / 180,
               child: BookCover(
@@ -160,9 +203,10 @@ class _HeroCovers extends StatelessWidget {
               ),
             ),
           ),
+          // Right cover: rotated +8°, dropped 20px
           Positioned(
-            right: 8,
-            top: 30,
+            top: 20,
+            left: 130,
             child: Transform.rotate(
               angle: 8 * math.pi / 180,
               child: BookCover(
@@ -175,13 +219,17 @@ class _HeroCovers extends StatelessWidget {
               ),
             ),
           ),
-          BookCover(
-            title: center.title,
-            author: center.author,
-            category: _cat(center.categoryId),
-            palette: BookVisuals.forBook(center.id, categoryId: center.categoryId),
-            width: 130,
-            height: 195,
+          // Center cover: forward, larger, slightly raised
+          Positioned(
+            top: 0,
+            child: BookCover(
+              title: center.title,
+              author: center.author,
+              category: _cat(center.categoryId),
+              palette: BookVisuals.forBook(center.id, categoryId: center.categoryId),
+              width: 130,
+              height: 195,
+            ),
           ),
         ],
       ),

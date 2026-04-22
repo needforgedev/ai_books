@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:ai_books/app/main_shell.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
 import 'package:ai_books/core/widgets/book_cover.dart';
@@ -220,7 +221,12 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
                         child: SizedBox(
                           height: 52,
                           child: TextButton(
-                            onPressed: widget.onExplore,
+                            onPressed: () {
+                              MainShell.goToTab(
+                                context,
+                                tab: MainShellTabs.home,
+                              );
+                            },
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.textSecondary,
                               shape: RoundedRectangleBorder(
@@ -231,35 +237,6 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
                               'Back home',
                               style: AppTypography.button.copyWith(
                                 color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 52,
-                          child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.ios_share_rounded,
-                              size: 18,
-                              color: AppColors.textPrimary,
-                            ),
-                            label: Text(
-                              'Share win',
-                              style: AppTypography.button.copyWith(
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textPrimary,
-                              side: const BorderSide(
-                                color: AppColors.border,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                           ),

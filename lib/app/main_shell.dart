@@ -6,8 +6,25 @@ import 'package:ai_books/features/library/screens/library_screen.dart';
 import 'package:ai_books/features/bookmarks/screens/bookmarks_screen.dart';
 import 'package:ai_books/features/profile/screens/profile_screen.dart';
 
+/// Tab indices for the floating bottom nav.
+class MainShellTabs {
+  MainShellTabs._();
+  static const int home = 0;
+  static const int library = 1;
+  static const int saved = 2;
+  static const int profile = 3;
+}
+
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
+
+  /// Pop everything back to the root MainShell and switch to the given tab.
+  /// Defaults to the Home tab.
+  static void goToTab(BuildContext context, {int tab = MainShellTabs.home}) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    final state = context.findRootAncestorStateOfType<_MainShellState>();
+    state?.switchTab(tab);
+  }
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -28,8 +45,16 @@ class _MainShellState extends State<MainShell> {
 
   void _onTabTap(int i) {
     setState(() => _currentIndex = i);
-    if (i == 2) {
-      // Trigger reload of saved items
+    if (i == MainShellTabs.saved) {
+      _bookmarksRefresh.value++;
+    }
+  }
+
+  /// Public — switch to the given tab from anywhere in the widget tree.
+  void switchTab(int tab) {
+    if (tab < 0 || tab >= _screens.length) return;
+    setState(() => _currentIndex = tab);
+    if (tab == MainShellTabs.saved) {
       _bookmarksRefresh.value++;
     }
   }

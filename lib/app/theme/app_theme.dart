@@ -29,7 +29,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        titleTextStyle: GoogleFonts.spaceGrotesk(
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.2,
@@ -42,12 +42,12 @@ class AppTheme {
         unselectedItemColor: AppColors.textTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: GoogleFonts.spaceGrotesk(
+        selectedLabelStyle: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.2,
         ),
-        unselectedLabelStyle: GoogleFonts.spaceGrotesk(
+        unselectedLabelStyle: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w400,
           letterSpacing: 0.2,
@@ -68,7 +68,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: GoogleFonts.spaceGrotesk(
+          textStyle: GoogleFonts.inter(
             fontSize: 17,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -81,7 +81,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: GoogleFonts.spaceGrotesk(
+          textStyle: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.2,
@@ -91,7 +91,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.spaceGrotesk(
+          textStyle: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -100,13 +100,13 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0x0FFFFFFF),
         selectedColor: AppColors.primary,
-        labelStyle: GoogleFonts.spaceGrotesk(
+        labelStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
           color: AppColors.textPrimary,
         ),
-        secondaryLabelStyle: GoogleFonts.spaceGrotesk(
+        secondaryLabelStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
@@ -136,7 +136,7 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.primary, width: 1),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: GoogleFonts.spaceGrotesk(
+        hintStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textMuted,

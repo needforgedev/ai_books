@@ -130,7 +130,7 @@ class _TabButton extends StatelessWidget {
               const SizedBox(width: 7),
               Text(
                 label,
-                style: GoogleFonts.spaceGrotesk(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   letterSpacing: -0.1,

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Speedread typography — Fraunces serif for display, Space Grotesk for body.
-/// Italic emphasis on accent words is a signature move.
+/// Speedread typography — Modern streaming font pair.
+/// Display: Space Grotesk · Body: Inter
 class AppTypography {
   AppTypography._();
 
@@ -15,7 +15,7 @@ class AppTypography {
     Color? color,
     FontStyle? style,
   }) {
-    return GoogleFonts.fraunces(
+    return GoogleFonts.spaceGrotesk(
       fontSize: size,
       fontWeight: weight,
       height: height,
@@ -32,7 +32,7 @@ class AppTypography {
     double letterSpacing = 0,
     Color? color,
   }) {
-    return GoogleFonts.spaceGrotesk(
+    return GoogleFonts.inter(
       fontSize: size,
       fontWeight: weight,
       height: height,

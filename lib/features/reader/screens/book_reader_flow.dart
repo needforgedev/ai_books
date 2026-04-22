@@ -131,6 +131,9 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
             categoryId: _book!.categoryId,
             author: _book!.author,
             onReadNext: () {
+              // Close the reader stack and let the user land on Home;
+              // BookCompleteScreen's own "Back home" button already handles
+              // the deep pop + tab switch via MainShell.goToTab.
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
             onExplore: () {
@@ -139,7 +142,7 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
           ),
         ),
       );
-      if (mounted) {
+      if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop(true);
       }
     } else {

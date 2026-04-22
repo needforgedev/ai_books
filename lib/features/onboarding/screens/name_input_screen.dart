@@ -172,7 +172,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _submit(),
                   cursorColor: AppColors.primary,
-                  style: GoogleFonts.fraunces(
+                  style: GoogleFonts.spaceGrotesk(
                     fontSize: 26,
                     fontWeight: FontWeight.w400,
                     height: 1.2,
@@ -181,7 +181,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
                   ),
                   decoration: InputDecoration(
                     hintText: 'Your name',
-                    hintStyle: GoogleFonts.fraunces(
+                    hintStyle: GoogleFonts.spaceGrotesk(
                       fontSize: 26,
                       fontWeight: FontWeight.w400,
                       letterSpacing: -0.4,
