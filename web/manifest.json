@@ -1,11 +1,11 @@
 {
-    "name": "ai_books",
-    "short_name": "ai_books",
+    "name": "Speedread",
+    "short_name": "Speedread",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Learn the world's best books in simple language.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

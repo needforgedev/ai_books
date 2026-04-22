@@ -1,6 +1,6 @@
-# ai_books
+# Speedread
 
-A new Flutter project.
+Learn the world's best books in simple language. A Blinkist-style mobile app for Gen Z that turns major nonfiction books into simplified, checkpoint-based reading experiences.
 
 ## Getting Started
 

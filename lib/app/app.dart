@@ -41,7 +41,7 @@ class _AiBooksAppState extends State<AiBooksApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AI Books',
+      title: 'Speedread',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: _isLoading

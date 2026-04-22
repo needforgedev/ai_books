@@ -34,6 +34,15 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
               ),
               const SizedBox(height: 24),
               Text(
+                'SPEEDREAD',
+                style: AppTypography.label.copyWith(
+                  color: AppColors.accent,
+                  letterSpacing: 4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
                 'LEARN THE WORLD\'S BEST BOOKS IN SIMPLE LANGUAGE',
                 style: AppTypography.displayHero,
                 textAlign: TextAlign.center,
