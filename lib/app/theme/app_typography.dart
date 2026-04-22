@@ -2,142 +2,111 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Luxury typography — Oswald for display, system sans for body.
-/// Bold headings, confident, modern.
+/// Speedread typography — Fraunces serif for display, Space Grotesk for body.
+/// Italic emphasis on accent words is a signature move.
 class AppTypography {
   AppTypography._();
 
-  static final String _displayFont = GoogleFonts.oswald().fontFamily!;
+  static TextStyle _display({
+    required double size,
+    FontWeight weight = FontWeight.w400,
+    double height = 1.1,
+    double letterSpacing = -0.4,
+    Color? color,
+    FontStyle? style,
+  }) {
+    return GoogleFonts.fraunces(
+      fontSize: size,
+      fontWeight: weight,
+      height: height,
+      letterSpacing: letterSpacing,
+      color: color ?? AppColors.textPrimary,
+      fontStyle: style ?? FontStyle.normal,
+    );
+  }
 
-  // Display Hero — 48px, weight 700, uppercase
-  static final TextStyle displayHero = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 48,
-    fontWeight: FontWeight.w700,
-    height: 1.05,
-    letterSpacing: 2.0,
-    color: AppColors.textPrimary,
-  );
+  static TextStyle _body({
+    required double size,
+    FontWeight weight = FontWeight.w400,
+    double height = 1.5,
+    double letterSpacing = 0,
+    Color? color,
+  }) {
+    return GoogleFonts.spaceGrotesk(
+      fontSize: size,
+      fontWeight: weight,
+      height: height,
+      letterSpacing: letterSpacing,
+      color: color ?? AppColors.textPrimary,
+    );
+  }
 
-  // Section Heading — 36px, weight 600, uppercase
-  static final TextStyle sectionHeading = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 36,
-    fontWeight: FontWeight.w600,
-    height: 1.10,
-    letterSpacing: 1.5,
-    color: AppColors.textPrimary,
-  );
+  // Display (Fraunces serif)
+  static TextStyle get displayHero => _display(size: 48, height: 1.02, letterSpacing: -1.6);
+  static TextStyle get displayLarge => _display(size: 42, height: 1.02, letterSpacing: -1.4);
+  static TextStyle get sectionHeading => _display(size: 36, height: 1.0, letterSpacing: -1.2);
+  static TextStyle get tileHeading => _display(size: 28, height: 1.08, letterSpacing: -0.8);
+  static TextStyle get titleLarge => _display(size: 22, height: 1.1, letterSpacing: -0.4);
+  static TextStyle get titleMedium => _display(size: 18, height: 1.2, letterSpacing: -0.3);
+  static TextStyle get subHeading => _display(size: 20, height: 1.2, letterSpacing: -0.3);
+  static TextStyle get bookTitle => _display(size: 30, weight: FontWeight.w400, height: 1.08, letterSpacing: -0.8);
 
-  // Tile Heading — 24px, weight 500
-  static final TextStyle tileHeading = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 24,
-    fontWeight: FontWeight.w500,
-    height: 1.15,
-    letterSpacing: 0.8,
-    color: AppColors.textPrimary,
-  );
+  // Italic variants (for accent words in headlines)
+  static TextStyle displayItalic(double size, {Color? color}) => _display(
+        size: size,
+        style: FontStyle.italic,
+        color: color,
+        height: 1.02,
+        letterSpacing: -1.4,
+      );
 
-  // Card Title — 18px, weight 600
-  static final TextStyle cardTitle = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-    height: 1.20,
-    letterSpacing: 0.5,
-    color: AppColors.textPrimary,
-  );
+  // Body (Space Grotesk)
+  static TextStyle get body => _body(size: 15, height: 1.5, color: AppColors.textSecondary);
+  static TextStyle get bodyEmphasis => _body(size: 15, weight: FontWeight.w600);
+  static TextStyle get bodyLarge => _body(size: 17, height: 1.5);
+  static TextStyle get bodySmall => _body(size: 13, height: 1.4, color: AppColors.textSecondary);
 
-  // Sub-heading — 18px, weight 400
-  static final TextStyle subHeading = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 18,
-    fontWeight: FontWeight.w400,
-    height: 1.20,
-    letterSpacing: 0.5,
-    color: AppColors.textPrimary,
-  );
+  // Buttons (Space Grotesk)
+  static TextStyle get buttonLarge => _body(
+        size: 17,
+        weight: FontWeight.w600,
+        height: 1.0,
+        letterSpacing: 0.2,
+        color: AppColors.textOnPrimary,
+      );
+  static TextStyle get button => _body(
+        size: 15,
+        weight: FontWeight.w600,
+        height: 1.0,
+        letterSpacing: 0.2,
+      );
 
-  // Body — 15px, weight 400, system font
-  static const TextStyle body = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    height: 1.53,
-    letterSpacing: -0.2,
-    color: AppColors.textSecondary,
-  );
+  // Caption / Micro (Space Grotesk)
+  static TextStyle get caption => _body(size: 12.5, height: 1.4, color: AppColors.textTertiary);
+  static TextStyle get captionBold => _body(size: 12.5, weight: FontWeight.w600, height: 1.4);
+  static TextStyle get micro => _body(size: 11, height: 1.3, color: AppColors.textTertiary);
 
-  // Body Emphasis — 15px, weight 600
-  static const TextStyle bodyEmphasis = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
-    height: 1.33,
-    letterSpacing: -0.2,
-    color: AppColors.textPrimary,
-  );
+  // Eyebrow / label — tracked uppercase (Space Grotesk)
+  static TextStyle get eyebrow => _body(
+        size: 11,
+        weight: FontWeight.w500,
+        letterSpacing: 2.5,
+        height: 1.0,
+        color: AppColors.textTertiary,
+      );
+  static TextStyle get label => _body(
+        size: 10.5,
+        weight: FontWeight.w500,
+        letterSpacing: 2.0,
+        height: 1.0,
+        color: AppColors.textMuted,
+      );
+  static TextStyle get link => _body(
+        size: 13,
+        weight: FontWeight.w500,
+        color: AppColors.primary,
+      );
 
-  // Button Large — 16px, weight 500, Oswald
-  static final TextStyle buttonLarge = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    height: 1.0,
-    letterSpacing: 1.0,
-    color: AppColors.textOnPrimary,
-  );
-
-  // Button — 14px, weight 500, Oswald
-  static final TextStyle button = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.8,
-    color: AppColors.textOnPrimary,
-  );
-
-  // Link — 14px, weight 400
-  static const TextStyle link = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
-    height: 1.43,
-    letterSpacing: -0.1,
-    color: AppColors.primary,
-  );
-
-  // Caption — 13px, weight 400
-  static const TextStyle caption = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
-    height: 1.38,
-    letterSpacing: 0,
-    color: AppColors.textTertiary,
-  );
-
-  // Caption Bold — 13px, weight 600
-  static const TextStyle captionBold = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w600,
-    height: 1.38,
-    color: AppColors.textSecondary,
-  );
-
-  // Micro — 11px, weight 400
-  static const TextStyle micro = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w400,
-    height: 1.36,
-    letterSpacing: 0.2,
-    color: AppColors.textTertiary,
-  );
-
-  // Label — 11px, weight 600, uppercase, Oswald
-  static final TextStyle label = TextStyle(
-    fontFamily: _displayFont,
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
-    height: 1.0,
-    letterSpacing: 2.0,
-    color: AppColors.textTertiary,
-  );
+  // Compat alias — old Luxury typography used `cardTitle`
+  static TextStyle get cardTitle => titleMedium;
 }

@@ -1,12 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
+import 'package:ai_books/core/widgets/book_cover.dart';
 import 'package:ai_books/domain/models/models.dart';
 import 'package:ai_books/domain/services/bookmark_service.dart';
 import 'package:ai_books/domain/services/content_service.dart';
+import 'package:ai_books/features/book_detail/screens/book_detail_screen.dart';
 
 class BookmarksScreen extends StatefulWidget {
-  const BookmarksScreen({super.key});
+  const BookmarksScreen({super.key, this.refreshTrigger});
+
+  /// External notifier — when its value changes, the screen reloads.
+  /// Used by MainShell to refresh on tab tap.
+  final ValueListenable<int>? refreshTrigger;
 
   @override
   State<BookmarksScreen> createState() => _BookmarksScreenState();
@@ -15,38 +22,54 @@ class BookmarksScreen extends StatefulWidget {
 class _BookmarksScreenState extends State<BookmarksScreen> {
   List<SavedItem> _quotes = [];
   List<SavedItem> _bookmarks = [];
-  Map<String, String> _bookTitles = {};
+  Map<String, BookEntry> _booksById = {};
+  Map<String, CheckpointEntry> _checkpointsById = {};
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    widget.refreshTrigger?.addListener(_loadData);
+  }
+
+  @override
+  void dispose() {
+    widget.refreshTrigger?.removeListener(_loadData);
+    super.dispose();
   }
 
   Future<void> _loadData() async {
     final quotes = await BookmarkService.getQuotes();
     final bookmarks = await BookmarkService.getBookmarks();
 
-    // Collect unique book IDs and fetch titles
     final bookIds = <String>{};
+    final checkpointIds = <String>{};
     for (final item in [...quotes, ...bookmarks]) {
       bookIds.add(item.sourceBookId);
+      if (item.sourceCheckpointId != null) {
+        checkpointIds.add(item.sourceCheckpointId!);
+      }
     }
 
-    final titles = <String, String>{};
+    final bookMap = <String, BookEntry>{};
     for (final id in bookIds) {
       final book = await ContentService.getBook(id);
-      if (book != null) {
-        titles[id] = book.title;
-      }
+      if (book != null) bookMap[id] = book;
+    }
+
+    final checkpointMap = <String, CheckpointEntry>{};
+    for (final id in checkpointIds) {
+      final cp = await ContentService.getCheckpoint(id);
+      if (cp != null) checkpointMap[id] = cp;
     }
 
     if (!mounted) return;
     setState(() {
       _quotes = quotes;
       _bookmarks = bookmarks;
-      _bookTitles = titles;
+      _booksById = bookMap;
+      _checkpointsById = checkpointMap;
       _isLoading = false;
     });
   }
@@ -57,11 +80,22 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     _loadData();
   }
 
+  void _openBook(String bookId) {
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute(
+        builder: (_) => BookDetailScreen(bookId: bookId),
+      ),
+    )
+        .then((_) => _loadData());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
+        bottom: false,
         child: _isLoading
             ? const Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
@@ -74,7 +108,7 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -83,10 +117,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
             size: 64,
             color: AppColors.textTertiary,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'No saved items yet',
-            style: AppTypography.body,
+            style: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -94,66 +130,95 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
   }
 
   Widget _buildContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          Text('SAVED', style: AppTypography.sectionHeading),
-          const SizedBox(height: 28),
-          // Quotes section
-          if (_quotes.isNotEmpty) ...[
-            Text('QUOTES', style: AppTypography.label),
-            const SizedBox(height: 12),
-            ..._quotes.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Dismissible(
-                    key: ValueKey('quote-${item.id}'),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      color: Colors.red.withValues(alpha: 0.8),
-                      child: const Icon(Icons.delete_outline,
-                          color: Colors.white),
-                    ),
-                    onDismissed: (_) => _removeItem(item),
-                    child: _QuoteCard(
-                      quote: item.savedText ?? '',
-                      source:
-                          _bookTitles[item.sourceBookId] ?? 'Unknown Book',
-                    ),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
+      children: [
+        Text('Saved', style: AppTypography.sectionHeading),
+        const SizedBox(height: 28),
+        if (_quotes.isNotEmpty) ...[
+          Text(
+            'QUOTES',
+            style: AppTypography.eyebrow.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ..._quotes.map((item) {
+            final book = _booksById[item.sourceBookId];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Dismissible(
+                key: ValueKey('quote-${item.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                )),
-            const SizedBox(height: 22),
-          ],
-          // Bookmarks section
-          if (_bookmarks.isNotEmpty) ...[
-            Text('BOOKMARKS', style: AppTypography.label),
-            const SizedBox(height: 12),
-            ..._bookmarks.map((item) => Dismissible(
-                  key: ValueKey('bookmark-${item.id}'),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    color: Colors.red.withValues(alpha: 0.8),
-                    child: const Icon(Icons.delete_outline,
-                        color: Colors.white),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
                   ),
-                  onDismissed: (_) => _removeItem(item),
-                  child: _BookmarkTile(
-                    bookName:
-                        _bookTitles[item.sourceBookId] ?? 'Unknown Book',
-                    checkpointName:
-                        item.sourceCheckpointId ?? 'Checkpoint',
+                ),
+                onDismissed: (_) => _removeItem(item),
+                child: GestureDetector(
+                  onTap: () => _openBook(item.sourceBookId),
+                  child: _QuoteCard(
+                    quote: item.savedText ?? '',
+                    bookTitle: book?.title ?? 'Unknown',
                   ),
-                )),
-          ],
+                ),
+              ),
+            );
+          }),
           const SizedBox(height: 24),
         ],
-      ),
+        if (_bookmarks.isNotEmpty) ...[
+          Text(
+            'BOOKMARKS',
+            style: AppTypography.eyebrow.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ..._bookmarks.map((item) {
+            final book = _booksById[item.sourceBookId];
+            final cp = item.sourceCheckpointId != null
+                ? _checkpointsById[item.sourceCheckpointId!]
+                : null;
+            final cpName = cp?.title ?? 'Checkpoint';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Dismissible(
+                key: ValueKey('bookmark-${item.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                  ),
+                ),
+                onDismissed: (_) => _removeItem(item),
+                child: GestureDetector(
+                  onTap: () => _openBook(item.sourceBookId),
+                  child: _BookmarkTile(
+                    book: book,
+                    checkpointName: cpName,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 }
@@ -161,35 +226,45 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 class _QuoteCard extends StatelessWidget {
   const _QuoteCard({
     required this.quote,
-    required this.source,
+    required this.bookTitle,
   });
 
   final String quote;
-  final String source;
+  final String bookTitle;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        border: Border.all(color: AppColors.border),
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(
+            Icons.format_quote_rounded,
+            size: 22,
+            color: AppColors.primary.withValues(alpha: 0.7),
+          ),
+          const SizedBox(height: 10),
           Text(
-            '"$quote"',
-            style: AppTypography.body.copyWith(
-              color: AppColors.textSecondary,
-              fontStyle: FontStyle.italic,
+            quote,
+            style: AppTypography.displayItalic(16).copyWith(
+              color: AppColors.textPrimary,
+              height: 1.45,
+              letterSpacing: -0.2,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            source,
-            style: AppTypography.captionBold,
+            '— $bookTitle',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textTertiary,
+            ),
           ),
         ],
       ),
@@ -199,44 +274,55 @@ class _QuoteCard extends StatelessWidget {
 
 class _BookmarkTile extends StatelessWidget {
   const _BookmarkTile({
-    required this.bookName,
+    required this.book,
     required this.checkpointName,
   });
 
-  final String bookName;
+  final BookEntry? book;
   final String checkpointName;
 
   @override
   Widget build(BuildContext context) {
+    final palette = book != null
+        ? BookVisuals.forBook(book!.id, categoryId: book!.categoryId)
+        : BookPalette.defaultPalette;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        border: Border.all(color: AppColors.border),
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.bookmark_rounded,
-            size: 20,
-            color: AppColors.primary,
+          BookCover(
+            title: book?.title ?? 'Unknown',
+            author: book?.author ?? '',
+            category: (book?.categoryId ?? '').toUpperCase(),
+            palette: palette,
+            width: 60,
+            height: 90,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  bookName,
-                  style: AppTypography.bodyEmphasis,
-                  maxLines: 1,
+                  checkpointName,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
-                  checkpointName,
-                  style: AppTypography.caption,
+                  book?.title ?? 'Unknown book',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -244,9 +330,9 @@ class _BookmarkTile extends StatelessWidget {
             ),
           ),
           const Icon(
-            Icons.arrow_forward_ios,
+            Icons.arrow_forward_ios_rounded,
             size: 14,
-            color: AppColors.textTertiary,
+            color: AppColors.textMuted,
           ),
         ],
       ),

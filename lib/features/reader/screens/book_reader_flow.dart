@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
+import 'package:ai_books/core/widgets/progress_rail.dart';
+import 'package:ai_books/core/widgets/radial_glow.dart';
 import 'package:ai_books/domain/models/models.dart';
 import 'package:ai_books/domain/services/content_service.dart';
 import 'package:ai_books/domain/services/progress_service.dart';
@@ -8,6 +10,7 @@ import 'package:ai_books/domain/services/bookmark_service.dart';
 import 'package:ai_books/domain/services/streak_service.dart';
 import 'package:ai_books/features/reader/screens/checkpoint_complete_screen.dart';
 import 'package:ai_books/features/reader/screens/book_complete_screen.dart';
+import 'package:ai_books/features/reader/screens/quote_decode_screen.dart';
 
 /// Manages the full reading flow for a book: loads checkpoints, shows them
 /// one by one, saves progress, and handles checkpoint/book completion.
@@ -51,12 +54,10 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
       if (idx >= 0) startIndex = idx;
     }
 
-    // Check bookmark state for current checkpoint
     bool bookmarked = false;
     if (checkpoints.isNotEmpty) {
-      bookmarked = await BookmarkService.isBookmarked(
-        checkpoints[startIndex].id,
-      );
+      bookmarked =
+          await BookmarkService.isBookmarked(checkpoints[startIndex].id);
     }
 
     if (!mounted) return;
@@ -96,7 +97,6 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
         ? null
         : _checkpoints[_currentCheckpointIndex + 1].id;
 
-    // Complete the current checkpoint
     await ProgressService.completeCheckpoint(
       bookId: _book!.id,
       completedCheckpointId: cp.id,
@@ -104,18 +104,14 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
       totalCheckpoints: _checkpoints.length,
     );
 
-    // Record activity for streak tracking
     await StreakService.recordActivity(additionalCheckpoints: 1);
 
     if (_isLastCheckpoint) {
-      // Finish book
       await ProgressService.finishBook(_book!.id);
       if (!mounted) return;
 
-      // Gather gains from checkpoint titles
       final gains = _checkpoints.map((c) => c.title).toList();
 
-      // Try to get a next book suggestion
       String nextBookTitle = 'Explore more books';
       if (_book!.nextBookIds.isNotEmpty) {
         final nextBook =
@@ -131,8 +127,10 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
             bookTitle: _book!.title,
             gains: gains,
             nextBookTitle: nextBookTitle,
+            bookId: _book!.id,
+            categoryId: _book!.categoryId,
+            author: _book!.author,
             onReadNext: () {
-              // Pop back to book detail or library
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
             onExplore: () {
@@ -141,12 +139,10 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
           ),
         ),
       );
-      // After book complete screen pops, go back to book detail
       if (mounted) {
         Navigator.of(context).pop(true);
       }
     } else {
-      // Show checkpoint complete screen
       if (!mounted) return;
       await Navigator.push(
         context,
@@ -162,7 +158,6 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
           ),
         ),
       );
-      // Advance to next checkpoint
       if (mounted) {
         setState(() {
           _currentCheckpointIndex++;
@@ -172,12 +167,61 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
     }
   }
 
+  Future<void> _onPrev() async {
+    if (_currentCheckpointIndex == 0) return;
+    setState(() {
+      _currentCheckpointIndex--;
+    });
+    _checkBookmarkState();
+  }
+
+  Future<void> _onToggleBookmark() async {
+    final cp = _currentCheckpoint;
+    if (cp == null || _book == null) return;
+    final isNowBookmarked = await BookmarkService.toggleBookmark(
+      bookId: _book!.id,
+      checkpointId: cp.id,
+    );
+    if (!mounted) return;
+    setState(() => _isCurrentBookmarked = isNowBookmarked);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isNowBookmarked ? 'Bookmark saved' : 'Bookmark removed'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _openQuoteDecode(BookPalette palette, CheckpointEntry cp) {
+    if (cp.keyQuote == null || cp.keyQuote!.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => QuoteDecodeScreen(
+          quote: cp.keyQuote!,
+          author: _book?.author ?? 'Unknown',
+          meaning: cp.explanationText ?? cp.recapText ?? cp.title,
+          palette: palette,
+          onSave: () async {
+            if (_book == null) return;
+            await BookmarkService.saveQuote(
+              bookId: _book!.id,
+              checkpointId: cp.id,
+              quoteText: cp.keyQuote!,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.surface,
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
@@ -198,276 +242,455 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
       );
     }
 
+    final palette = BookVisuals.forBook(book.id, categoryId: book.categoryId);
+    final nextTitle = _isLastCheckpoint
+        ? 'Finish book'
+        : 'Checkpoint ${_currentCheckpointIndex + 2}: '
+            '${_checkpoints[_currentCheckpointIndex + 1].title}';
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          color: AppColors.textPrimary,
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-        title: Text(
-          book.title,
-          style: AppTypography.bodyEmphasis.copyWith(
-            color: AppColors.textPrimary,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text(
-                '${_currentCheckpointIndex + 1}/${_checkpoints.length}',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textTertiary,
+      backgroundColor: palette.bg,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: [
+              // Ambient accent glow top-right
+              Positioned(
+                top: -100,
+                right: -60,
+                child: RadialGlow(
+                  color: palette.accent,
+                  size: 300,
+                  opacity: 0.15,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+              // Vertical progress rail on LEFT edge
+              Positioned(
+                top: 120,
+                bottom: 120,
+                left: 12,
+                child: ProgressRail(
+                  total: _checkpoints.length,
+                  done: _currentCheckpointIndex,
+                  accent: palette.accent,
+                  height: constraints.maxHeight - 240,
+                  thickness: 3,
+                ),
+              ),
+              SafeArea(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
-                    // Checkpoint title
-                    Text(checkpoint.title,
-                        style: AppTypography.tileHeading),
-                    const SizedBox(height: 20),
-                    // Hook text
-                    if (checkpoint.hookText != null &&
-                        checkpoint.hookText!.isNotEmpty) ...[
-                      Text(
-                        checkpoint.hookText!,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.textPrimary,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    // Explanation text
-                    if (checkpoint.explanationText != null &&
-                        checkpoint.explanationText!.isNotEmpty) ...[
-                      Text(
-                        checkpoint.explanationText!,
-                        style: AppTypography.body.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                    ],
-                    // Key Quote card
-                    if (checkpoint.keyQuote != null &&
-                        checkpoint.keyQuote!.isNotEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: const BoxDecoration(
-                          color: AppColors.surfaceElevated,
-                          border: Border(
-                            left: BorderSide(
-                              color: AppColors.accent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                    // Top chrome
+                    _ReaderTopBar(
+                      palette: palette,
+                      bookTitle: book.title,
+                      current: _currentCheckpointIndex + 1,
+                      total: _checkpoints.length,
+                      bookmarked: _isCurrentBookmarked,
+                      onBack: () => Navigator.of(context).pop(true),
+                      onToggleBookmark: _onToggleBookmark,
+                    ),
+                    // Body
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(48, 12, 24, 160),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Eyebrow
                             Text(
-                              '"${checkpoint.keyQuote!}"',
-                              style: AppTypography.body.copyWith(
-                                color: AppColors.textPrimary,
-                                fontStyle: FontStyle.italic,
-                                height: 1.5,
+                              'CORE IDEA',
+                              style: AppTypography.eyebrow.copyWith(
+                                color: palette.accent,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    // Modern Example card
-                    if (checkpoint.modernExample != null &&
-                        checkpoint.modernExample!.isNotEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                            const SizedBox(height: 14),
+                            // Huge checkpoint title
                             Text(
-                              'Modern Example',
-                              style: AppTypography.captionBold,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              checkpoint.modernExample!,
-                              style: AppTypography.body,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    // Reflection Prompt card
-                    if (checkpoint.reflectionPrompt != null &&
-                        checkpoint.reflectionPrompt!.isNotEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Reflect',
-                              style: AppTypography.captionBold.copyWith(
-                                color: AppColors.primary,
+                              checkpoint.title,
+                              style: AppTypography
+                                  .sectionHeading
+                                  .copyWith(
+                                fontSize: 34,
+                                color: palette.ink,
+                                letterSpacing: -1.0,
+                                height: 1.05,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              checkpoint.reflectionPrompt!,
-                              style: AppTypography.body.copyWith(
-                                color: AppColors.textSecondary,
+                            const SizedBox(height: 24),
+                            // Hook card
+                            if (checkpoint.hookText != null &&
+                                checkpoint.hookText!.isNotEmpty) ...[
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: palette.ink.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color:
+                                        palette.ink.withValues(alpha: 0.1),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'HOOK',
+                                      style: AppTypography.eyebrow.copyWith(
+                                        color: palette.ink
+                                            .withValues(alpha: 0.55),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      checkpoint.hookText!,
+                                      style: AppTypography.titleMedium
+                                          .copyWith(
+                                        color: palette.ink,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 22),
+                            ],
+                            // Explanation text
+                            if (checkpoint.explanationText != null &&
+                                checkpoint.explanationText!.isNotEmpty) ...[
+                              Text(
+                                checkpoint.explanationText!,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  fontSize: 16,
+                                  height: 1.65,
+                                  color:
+                                      palette.ink.withValues(alpha: 0.85),
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                            ],
+                            // Modern example
+                            if (checkpoint.modernExample != null &&
+                                checkpoint.modernExample!.isNotEmpty) ...[
+                              Text(
+                                'MODERN EXAMPLE',
+                                style: AppTypography.eyebrow.copyWith(
+                                  color: palette.ink
+                                      .withValues(alpha: 0.55),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                checkpoint.modernExample!,
+                                style: AppTypography.bodyLarge.copyWith(
+                                  fontSize: 16,
+                                  height: 1.65,
+                                  color:
+                                      palette.ink.withValues(alpha: 0.78),
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                            ],
+                            // Quote pull (tappable)
                             if (checkpoint.keyQuote != null &&
                                 checkpoint.keyQuote!.isNotEmpty) ...[
-                              const SizedBox(height: 14),
                               GestureDetector(
-                                onTap: () async {
-                                  if (_book == null) return;
-                                  await BookmarkService.saveQuote(
-                                    bookId: _book!.id,
-                                    checkpointId: checkpoint.id,
-                                    quoteText: checkpoint.keyQuote!,
-                                  );
-                                  if (!mounted) return;
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Quote saved'),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                                child: Text(
-                                  'SAVE THOUGHT',
-                                  style:
-                                      AppTypography.captionBold.copyWith(
-                                    color: AppColors.accent,
+                                onTap: () =>
+                                    _openQuoteDecode(palette, checkpoint),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: palette.accent,
+                                    borderRadius:
+                                        BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.format_quote_rounded,
+                                        color: palette.bg,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              checkpoint.keyQuote!,
+                                              style: AppTypography
+                                                  .titleMedium
+                                                  .copyWith(
+                                                color: palette.bg,
+                                                fontStyle: FontStyle.italic,
+                                                height: 1.35,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Text(
+                                              'TAP TO DECODE →',
+                                              style: AppTypography.eyebrow
+                                                  .copyWith(
+                                                color: palette.bg
+                                                    .withValues(alpha: 0.7),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 22),
+                            ],
+                            // Reflection prompt
+                            if (checkpoint.reflectionPrompt != null &&
+                                checkpoint
+                                    .reflectionPrompt!.isNotEmpty) ...[
+                              Text(
+                                'REFLECT',
+                                style: AppTypography.eyebrow.copyWith(
+                                  color: palette.accent,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                checkpoint.reflectionPrompt!,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: palette.ink,
+                                  height: 1.4,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
                             ],
                           ],
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 100),
+                    ),
                   ],
                 ),
               ),
-            ),
-            // Fixed bottom bar
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceElevated,
-                border: Border(
-                  top: BorderSide(color: AppColors.border),
+              // Bottom nav bar with gradient fade
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _ReaderBottomBar(
+                  palette: palette,
+                  nextTitle: nextTitle,
+                  showPrev: _currentCheckpointIndex > 0,
+                  onPrev: _onPrev,
+                  onNext: _onNext,
                 ),
               ),
-              child: Row(
-                children: [
-                  // Bookmark button
-                  GestureDetector(
-                    onTap: () async {
-                      final cp = _currentCheckpoint;
-                      if (cp == null || _book == null) return;
-                      final isNowBookmarked =
-                          await BookmarkService.toggleBookmark(
-                        bookId: _book!.id,
-                        checkpointId: cp.id,
-                      );
-                      if (!mounted) return;
-                      setState(
-                          () => _isCurrentBookmarked = isNowBookmarked);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(isNowBookmarked
-                              ? 'Bookmark saved'
-                              : 'Bookmark removed'),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    child: SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Icon(
-                        _isCurrentBookmarked
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_outline_rounded,
-                        color: _isCurrentBookmarked
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                        size: 22,
-                      ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ReaderTopBar extends StatelessWidget {
+  const _ReaderTopBar({
+    required this.palette,
+    required this.bookTitle,
+    required this.current,
+    required this.total,
+    required this.bookmarked,
+    required this.onBack,
+    required this.onToggleBookmark,
+  });
+
+  final BookPalette palette;
+  final String bookTitle;
+  final int current;
+  final int total;
+  final bool bookmarked;
+  final VoidCallback onBack;
+  final VoidCallback onToggleBookmark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      child: Row(
+        children: [
+          _RoundIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            palette: palette,
+            onTap: onBack,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  bookTitle.toUpperCase(),
+                  style: AppTypography.eyebrow.copyWith(
+                    color: palette.ink.withValues(alpha: 0.55),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Checkpoint $current of $total',
+                  style: AppTypography.caption.copyWith(
+                    color: palette.ink.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _RoundIconButton(
+            icon: bookmarked
+                ? Icons.bookmark_rounded
+                : Icons.bookmark_outline_rounded,
+            palette: palette,
+            tint: bookmarked ? palette.accent : null,
+            onTap: onToggleBookmark,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundIconButton extends StatelessWidget {
+  const _RoundIconButton({
+    required this.icon,
+    required this.palette,
+    required this.onTap,
+    this.tint,
+  });
+
+  final IconData icon;
+  final BookPalette palette;
+  final VoidCallback onTap;
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: palette.ink.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: palette.ink.withValues(alpha: 0.12)),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: tint ?? palette.ink.withValues(alpha: 0.9),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReaderBottomBar extends StatelessWidget {
+  const _ReaderBottomBar({
+    required this.palette,
+    required this.nextTitle,
+    required this.showPrev,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  final BookPalette palette;
+  final String nextTitle;
+  final bool showPrev;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 40, 20, 28),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            palette.bg.withValues(alpha: 0),
+            palette.bg.withValues(alpha: 0.85),
+            palette.bg,
+          ],
+          stops: const [0.0, 0.4, 1.0],
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (showPrev) ...[
+              GestureDetector(
+                onTap: onPrev,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: palette.ink.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: palette.ink.withValues(alpha: 0.22),
                     ),
                   ),
-                  const Spacer(),
-                  // Next button
-                  SizedBox(
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: _onNext,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textOnPrimary,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
-                        ),
-                        elevation: 0,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 28),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _isLastCheckpoint ? 'FINISH' : 'NEXT',
-                            style: AppTypography.button.copyWith(
-                              color: AppColors.textOnPrimary,
-                            ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: palette.ink.withValues(alpha: 0.9),
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: GestureDetector(
+                onTap: onNext,
+                child: Container(
+                  height: 56,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: palette.accent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          nextTitle,
+                          style: AppTypography.button.copyWith(
+                            color: palette.bg,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward, size: 18),
-                        ],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: palette.bg,
+                        size: 20,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ],

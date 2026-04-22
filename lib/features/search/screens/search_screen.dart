@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/app/theme/app_typography.dart';
-import 'package:ai_books/core/widgets/ai_book_card.dart';
+import 'package:ai_books/core/widgets/book_cover.dart';
 import 'package:ai_books/domain/models/models.dart';
 import 'package:ai_books/domain/services/content_service.dart';
 import 'package:ai_books/features/book_detail/screens/book_detail_screen.dart';
@@ -71,8 +71,7 @@ class _SearchScreenState extends State<SearchScreen> {
           return book.author.toLowerCase().contains(query);
         case 'Categories':
           final cat = _categoriesById[book.categoryId];
-          return cat != null &&
-              cat.title.toLowerCase().contains(query);
+          return cat != null && cat.title.toLowerCase().contains(query);
         case 'Goals':
           return book.goalTags
               .any((tag) => tag.toLowerCase().contains(query));
@@ -83,16 +82,6 @@ class _SearchScreenState extends State<SearchScreen> {
     }).toList();
 
     setState(() => _results = filtered);
-  }
-
-  Color _coverColorForBook(BookEntry book) {
-    final cat = _categoriesById[book.categoryId];
-    if (cat != null) {
-      // Parse hex color from category themeColor (e.g. "0xFF4A90D9")
-      final colorValue = int.tryParse(cat.themeColor);
-      if (colorValue != null) return Color(colorValue);
-    }
-    return AppColors.primary;
   }
 
   @override
@@ -109,45 +98,65 @@ class _SearchScreenState extends State<SearchScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Search bar
+            // Top bar — back + search field
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: TextField(
-                controller: _searchController,
-                style: AppTypography.body.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Search books, authors, or topics',
-                  hintStyle: AppTypography.body.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search_rounded,
-                    color: AppColors.textTertiary,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.surfaceInput,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.zero,
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 1.5,
+              padding: const EdgeInsets.fromLTRB(16, 12, 20, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 16,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search books, authors, topics',
+                          hintStyle: AppTypography.body.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: AppColors.textTertiary,
+                            size: 20,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 14),
@@ -173,16 +182,17 @@ class _SearchScreenState extends State<SearchScreen> {
                       color: isSelected
                           ? AppColors.textOnPrimary
                           : AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
                     ),
-                    backgroundColor: AppColors.surfaceCard,
+                    backgroundColor: AppColors.surfaceMuted,
                     selectedColor: AppColors.primary,
                     checkmarkColor: AppColors.textOnPrimary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
+                      borderRadius: BorderRadius.circular(999),
                       side: BorderSide(
                         color: isSelected
                             ? AppColors.primary
-                            : AppColors.border,
+                            : AppColors.borderSubtle,
                       ),
                     ),
                     showCheckmark: false,
@@ -192,8 +202,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 16),
-            // Results or empty state
+            const SizedBox(height: 18),
             Expanded(
               child: _hasQuery ? _buildResults() : _buildEmptyState(),
             ),
@@ -204,7 +213,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -213,10 +222,12 @@ class _SearchScreenState extends State<SearchScreen> {
             size: 56,
             color: AppColors.textTertiary,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             'Search for books, authors, or topics',
-            style: AppTypography.body,
+            style: AppTypography.body.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -229,12 +240,12 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.search_off_rounded,
               size: 56,
               color: AppColors.textTertiary,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               'No results found',
               style: AppTypography.body.copyWith(
@@ -247,17 +258,13 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
       itemCount: _results.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 14),
       itemBuilder: (context, index) {
         final book = _results[index];
-        return AiBookCard(
-          title: book.title,
-          author: book.author,
-          coverColor: _coverColorForBook(book),
-          difficulty: book.difficulty,
-          estimatedMinutes: book.estimatedMinutes,
+        return _BookRow(
+          book: book,
           onTap: () {
             Navigator.push(
               context,
@@ -268,6 +275,67 @@ class _SearchScreenState extends State<SearchScreen> {
           },
         );
       },
+    );
+  }
+}
+
+class _BookRow extends StatelessWidget {
+  const _BookRow({required this.book, required this.onTap});
+
+  final BookEntry book;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = BookVisuals.forBook(book.id, categoryId: book.categoryId);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          BookCover(
+            title: book.title,
+            author: book.author,
+            category: book.categoryId.toUpperCase(),
+            palette: palette,
+            width: 72,
+            height: 108,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  book.title,
+                  style: AppTypography.titleMedium.copyWith(
+                    fontSize: 17,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  book.author,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${book.estimatedMinutes} mins · ${book.difficulty}',
+                  style: AppTypography.micro.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

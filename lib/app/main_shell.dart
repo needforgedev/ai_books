@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ai_books/app/theme/app_colors.dart';
+import 'package:ai_books/core/widgets/floating_tab_bar.dart';
 import 'package:ai_books/features/home/screens/home_screen.dart';
 import 'package:ai_books/features/library/screens/library_screen.dart';
-import 'package:ai_books/features/search/screens/search_screen.dart';
 import 'package:ai_books/features/bookmarks/screens/bookmarks_screen.dart';
 import 'package:ai_books/features/profile/screens/profile_screen.dart';
 
@@ -15,44 +16,52 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    LibraryScreen(),
-    SearchScreen(),
-    BookmarksScreen(),
-    ProfileScreen(),
+  // Bumped each time the Saved tab is tapped — BookmarksScreen listens and reloads.
+  final ValueNotifier<int> _bookmarksRefresh = ValueNotifier<int>(0);
+
+  late final List<Widget> _screens = [
+    const HomeScreen(),
+    const LibraryScreen(),
+    BookmarksScreen(refreshTrigger: _bookmarksRefresh),
+    const ProfileScreen(),
   ];
+
+  void _onTabTap(int i) {
+    setState(() => _currentIndex = i);
+    if (i == 2) {
+      // Trigger reload of saved items
+      _bookmarksRefresh.value++;
+    }
+  }
+
+  @override
+  void dispose() {
+    _bookmarksRefresh.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
+      backgroundColor: AppColors.surface,
+      extendBody: true,
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: _currentIndex,
+            children: _screens,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
-            label: 'Library',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search_rounded),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark_rounded),
-            label: 'Saved',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: FloatingTabBar(
+                currentIndex: _currentIndex,
+                onTap: _onTabTap,
+              ),
+            ),
           ),
         ],
       ),

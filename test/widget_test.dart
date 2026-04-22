@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_books/features/onboarding/screens/welcome_screen.dart';
+import 'package:ai_books/core/widgets/progress_rail.dart';
+import 'package:ai_books/app/theme/app_colors.dart';
 
 void main() {
-  testWidgets('Welcome screen renders GET STARTED button', (WidgetTester tester) async {
+  testWidgets('ProgressRail renders without crashing', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: OnboardingWelcomeScreen(onGetStarted: () {}),
+      const MaterialApp(
+        home: Scaffold(
+          backgroundColor: AppColors.surface,
+          body: Center(
+            child: ProgressRail(total: 6, done: 3),
+          ),
+        ),
       ),
     );
 
-    expect(find.text('GET STARTED'), findsOneWidget);
+    expect(find.byType(ProgressRail), findsOneWidget);
   });
 }

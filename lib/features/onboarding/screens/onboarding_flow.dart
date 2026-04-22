@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/features/onboarding/screens/welcome_screen.dart';
-import 'package:ai_books/features/onboarding/screens/interests_screen.dart';
-import 'package:ai_books/features/onboarding/screens/goals_screen.dart';
-import 'package:ai_books/features/onboarding/screens/improve_screen.dart';
-import 'package:ai_books/features/onboarding/screens/reading_comfort_screen.dart';
-import 'package:ai_books/features/onboarding/screens/daily_time_screen.dart';
-import 'package:ai_books/features/onboarding/screens/streak_screen.dart';
+import 'package:ai_books/features/onboarding/screens/name_input_screen.dart';
+import 'package:ai_books/features/onboarding/screens/onboarding_question_screen.dart';
 import 'package:ai_books/features/onboarding/screens/recommendation_screen.dart';
 import 'package:ai_books/domain/models/book_entry.dart';
 import 'package:ai_books/domain/services/recommendation_service.dart';
@@ -26,21 +22,50 @@ class OnboardingFlow extends StatefulWidget {
 class _OnboardingFlowState extends State<OnboardingFlow> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  static const int _totalPages = 8;
+
+  // 4 questions (Name, Interests, Goals, Comfort) + welcome + recommendation
+  static const int _questionSteps = 4;
 
   // Collected data
+  String _displayName = '';
   List<String> _interests = [];
   List<String> _goals = [];
-  List<String> _improvements = [];
   String _readingComfort = '';
-  int _dailyMinutes = 0;
-  int _streakDays = 0;
 
   // Recommendation results
   BookEntry? _recommendedBook;
-  // ignore: unused_field
   List<BookEntry> _alternateBooks = [];
   String _reasonText = '';
+
+  static const List<String> _interestOptions = [
+    'Philosophy',
+    'Psychology',
+    'Self Growth',
+    'Business',
+    'Science',
+    'History',
+    'Spirituality',
+    'Sci-Fi',
+    'Sociology',
+    'Mindfulness',
+  ];
+
+  static const List<String> _goalOptions = [
+    'Build discipline',
+    'Reduce overthinking',
+    'Understand people',
+    'Find purpose',
+    'Improve mindset',
+    'Think more clearly',
+    'Get richer',
+    'Feel calmer',
+  ];
+
+  static const List<String> _comfortOptions = [
+    'Beginner',
+    'Moderate',
+    'Advanced',
+  ];
 
   @override
   void dispose() {
@@ -59,165 +84,129 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
   }
 
-  void _nextPage() {
-    _goToPage(_currentPage + 1);
-  }
-
+  void _nextPage() => _goToPage(_currentPage + 1);
   void _previousPage() {
-    if (_currentPage > 0) {
-      _goToPage(_currentPage - 1);
-    }
+    if (_currentPage > 0) _goToPage(_currentPage - 1);
   }
 
   Map<String, dynamic> _collectData() {
     return {
+      'displayName': _displayName,
       'interests': _interests,
       'goals': _goals,
-      'improvements': _improvements,
+      // Keep keys for downstream compatibility
+      'improvements': <String>[],
       'readingComfort': _readingComfort,
-      'dailyMinutes': _dailyMinutes,
-      'streakDays': _streakDays,
+      'dailyMinutes': 0,
+      'streakDays': 0,
     };
+  }
+
+  Future<void> _runRecommendationAndAdvance() async {
+    final result = await RecommendationService.getRecommendations(
+      interests: _interests,
+      goals: _goals,
+      improvements: const [],
+      readingComfort: _readingComfort,
+    );
+    if (!mounted) return;
+    setState(() {
+      _recommendedBook = result['primary'] as BookEntry;
+      _alternateBooks =
+          List<BookEntry>.from(result['alternates'] as List);
+      _reasonText = result['reason'] as String;
+    });
+    _nextPage();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: Stack(
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        onPageChanged: (index) {
+          setState(() {
+            _currentPage = index;
+          });
+        },
         children: [
-          PageView(
-            controller: _pageController,
-            physics: const NeverScrollableScrollPhysics(),
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
+          // 0: Welcome
+          OnboardingWelcomeScreen(onGetStarted: _nextPage),
+
+          // 1: Name input
+          NameInputScreen(
+            step: 1,
+            totalSteps: _questionSteps,
+            initial: _displayName,
+            onBack: _previousPage,
+            onNext: (name) {
+              _displayName = name;
+              _nextPage();
             },
-            children: [
-              // 0: Welcome
-              OnboardingWelcomeScreen(
-                onGetStarted: _nextPage,
-              ),
-              // 1: Interests
-              InterestsScreen(
-                onNext: (selected) {
-                  _interests = selected;
-                  _nextPage();
-                },
-              ),
-              // 2: Goals
-              GoalsScreen(
-                onNext: (selected) {
-                  _goals = selected;
-                  _nextPage();
-                },
-              ),
-              // 3: Improve
-              ImproveScreen(
-                onNext: (selected) {
-                  _improvements = selected;
-                  _nextPage();
-                },
-              ),
-              // 4: Reading Comfort
-              ReadingComfortScreen(
-                onNext: (selected) {
-                  _readingComfort = selected;
-                  _nextPage();
-                },
-              ),
-              // 5: Daily Time
-              DailyTimeScreen(
-                onNext: (minutes) {
-                  _dailyMinutes = minutes;
-                  _nextPage();
-                },
-              ),
-              // 6: Streak
-              StreakScreen(
-                onNext: (days) async {
-                  _streakDays = days;
-                  // Run recommendation engine before showing the result
-                  final result =
-                      await RecommendationService.getRecommendations(
-                    interests: _interests,
-                    goals: _goals,
-                    improvements: _improvements,
-                    readingComfort: _readingComfort,
-                  );
-                  setState(() {
-                    _recommendedBook = result['primary'] as BookEntry;
-                    _alternateBooks =
-                        List<BookEntry>.from(result['alternates'] as List);
-                    _reasonText = result['reason'] as String;
-                  });
-                  _nextPage();
-                },
-              ),
-              // 7: Recommendation
-              RecommendationScreen(
-                bookTitle: _recommendedBook?.title ?? 'Atomic Habits',
-                bookAuthor: _recommendedBook?.author ?? 'James Clear',
-                reasonText: _reasonText.isNotEmpty
-                    ? _reasonText
-                    : 'Because you picked Business + build discipline + beginner-friendly reading',
-                onStartReading: () {
-                  widget.onOnboardingComplete(_collectData());
-                },
-                onSeeOtherPicks: () {
-                  // Placeholder — could open a bottom sheet or navigate
-                },
-              ),
-            ],
           ),
 
-          // Progress indicator (hidden on welcome screen)
-          if (_currentPage > 0)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 8,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(1),
-                    child: LinearProgressIndicator(
-                      value: _currentPage / (_totalPages - 1),
-                      minHeight: 2,
-                      backgroundColor: AppColors.surfaceMuted,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // 2: Interests (multi)
+          OnboardingQuestionScreen(
+            step: 2,
+            totalSteps: _questionSteps,
+            eyebrow: 'WHAT PULLS YOU IN',
+            title: 'Which ideas do you keep coming back to?',
+            options: _interestOptions,
+            multi: true,
+            initial: _interests,
+            onBack: _previousPage,
+            onNext: (selected) {
+              _interests = selected;
+              _nextPage();
+            },
+          ),
 
-          // Back button (hidden on welcome screen)
-          if (_currentPage > 0)
-            Positioned(
-              top: 0,
-              left: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, top: 20),
-                  child: IconButton(
-                    onPressed: _previousPage,
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: 20,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // 3: Goals (multi)
+          OnboardingQuestionScreen(
+            step: 3,
+            totalSteps: _questionSteps,
+            eyebrow: 'WHAT WOULD MOVE THE NEEDLE',
+            title: 'What do you want this year to change?',
+            options: _goalOptions,
+            multi: true,
+            initial: _goals,
+            onBack: _previousPage,
+            onNext: (selected) {
+              _goals = selected;
+              _nextPage();
+            },
+          ),
+
+          // 4: Reading comfort (single)
+          OnboardingQuestionScreen(
+            step: 4,
+            totalSteps: _questionSteps,
+            eyebrow: 'HOW YOU READ',
+            title: 'Where are you on the reading spectrum?',
+            options: _comfortOptions,
+            multi: false,
+            initial: _readingComfort.isEmpty ? const [] : [_readingComfort],
+            onBack: _previousPage,
+            onNext: (selected) async {
+              _readingComfort = selected.isNotEmpty ? selected.first : '';
+              await _runRecommendationAndAdvance();
+            },
+          ),
+
+          // 5: Recommendation
+          RecommendationScreen(
+            book: _recommendedBook,
+            reasonText: _reasonText,
+            alternateCount: _alternateBooks.length,
+            onStartReading: () {
+              widget.onOnboardingComplete(_collectData());
+            },
+            onSeeOtherPicks: () {
+              // Placeholder — could open a bottom sheet or navigate
+            },
+          ),
         ],
       ),
     );

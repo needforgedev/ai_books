@@ -3,24 +3,20 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Luxury dark theme — monochromatic, premium, bold.
+/// Speedread cinematic dark theme.
 class AppTheme {
   AppTheme._();
 
-  static String get _oswald => GoogleFonts.oswald().fontFamily!;
-
-  static ThemeData get light => dark; // Luxury is dark-only for now
+  static ThemeData get light => dark;
 
   static ThemeData get dark {
-    final oswald = _oswald;
-
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.surface,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.textOnPrimary,
-        secondary: AppColors.accent,
+        secondary: AppColors.flame,
         onSecondary: AppColors.textOnPrimary,
         surface: AppColors.surfaceCard,
         onSurface: AppColors.textPrimary,
@@ -33,11 +29,10 @@ class AppTheme {
         scrolledUnderElevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        titleTextStyle: TextStyle(
-          fontFamily: oswald,
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.8,
+        titleTextStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
           color: AppColors.textPrimary,
         ),
       ),
@@ -47,87 +42,79 @@ class AppTheme {
         unselectedItemColor: AppColors.textTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: TextStyle(
-          fontFamily: oswald,
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 1.0,
+        selectedLabelStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
         ),
-        unselectedLabelStyle: TextStyle(
-          fontFamily: oswald,
-          fontSize: 10,
+        unselectedLabelStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 11,
           fontWeight: FontWeight.w400,
-          letterSpacing: 1.0,
+          letterSpacing: 0.2,
         ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: AppColors.border, width: 0.5),
+          borderRadius: BorderRadius.circular(18),
         ),
         margin: EdgeInsets.zero,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.buttonPrimary,
+          backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-          textStyle: TextStyle(
-            fontFamily: oswald,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 1.5,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: GoogleFonts.spaceGrotesk(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: AppColors.textPrimary,
           side: const BorderSide(color: AppColors.border),
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-          textStyle: TextStyle(
-            fontFamily: oswald,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: GoogleFonts.spaceGrotesk(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            letterSpacing: 1.5,
+            letterSpacing: 0.2,
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.spaceGrotesk(
             fontSize: 14,
-            fontWeight: FontWeight.w400,
-            letterSpacing: 0,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceCard,
+        backgroundColor: const Color(0x0FFFFFFF),
         selectedColor: AppColors.primary,
-        labelStyle: TextStyle(
-          fontFamily: oswald,
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.5,
-          color: AppColors.textSecondary,
-        ),
-        secondaryLabelStyle: TextStyle(
-          fontFamily: oswald,
-          fontSize: 13,
+        labelStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 14,
           fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
+          letterSpacing: 0.1,
+          color: AppColors.textPrimary,
+        ),
+        secondaryLabelStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
           color: AppColors.textOnPrimary,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-        side: const BorderSide(color: AppColors.border, width: 0.5),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        side: const BorderSide(color: AppColors.border),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
@@ -135,34 +122,34 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceInput,
+        fillColor: const Color(0x0DFFFFFF),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(0),
-          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(0),
-          borderSide: const BorderSide(color: AppColors.border, width: 0.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(0),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.primary, width: 1),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: const TextStyle(
-          fontSize: 15,
+        hintStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: AppColors.textTertiary,
+          color: AppColors.textMuted,
         ),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.primary;
+          if (states.contains(WidgetState.selected)) return AppColors.textOnPrimary;
           return AppColors.textTertiary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.surfaceMuted;
-          return AppColors.surfaceCard;
+          if (states.contains(WidgetState.selected)) return AppColors.primary;
+          return AppColors.surfaceMuted;
         }),
       ),
       listTileTheme: const ListTileThemeData(

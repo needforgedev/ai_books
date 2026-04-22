@@ -28,11 +28,23 @@ class CheckpointCompleteScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              // Checkmark icon
-              const Icon(
-                Icons.check_rounded,
-                size: 64,
-                color: AppColors.primary,
+              // Centered checkmark
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  size: 64,
+                  color: AppColors.primary,
+                ),
               ),
               const SizedBox(height: 28),
               // Title
@@ -41,7 +53,7 @@ class CheckpointCompleteScreen extends StatelessWidget {
                 style: AppTypography.sectionHeading,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               // Progress
               Text(
                 '$checkpointNumber of $totalCheckpoints finished',
@@ -50,20 +62,33 @@ class CheckpointCompleteScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              // Key takeaway card
+              // Takeaway card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceCard,
-                  border: Border.all(color: AppColors.border),
+                  color: Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Key Takeaway', style: AppTypography.cardTitle),
-                    const SizedBox(height: 8),
-                    Text(keyTakeaway, style: AppTypography.body),
+                    Text(
+                      'TAKEAWAY',
+                      style: AppTypography.eyebrow.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      keyTakeaway,
+                      style: AppTypography.subHeading.copyWith(
+                        fontSize: 20,
+                        color: AppColors.textPrimary,
+                        height: 1.35,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -71,47 +96,44 @@ class CheckpointCompleteScreen extends StatelessWidget {
               // Continue button
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: onContinue,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textOnPrimary,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 0,
                   ),
                   child: Text(
-                    'CONTINUE',
+                    'Continue',
                     style: AppTypography.buttonLarge.copyWith(
                       color: AppColors.textOnPrimary,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              // Return Home button
+              const SizedBox(height: 10),
+              // Return home
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: TextButton(
                   onPressed: onReturnHome,
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
+                    foregroundColor: AppColors.textSecondary,
                   ),
                   child: Text(
-                    'Return Home',
+                    'Return home',
                     style: AppTypography.button.copyWith(
-                      color: AppColors.primary,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
             ],
           ),
         ),

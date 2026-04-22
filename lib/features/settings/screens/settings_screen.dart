@@ -16,8 +16,8 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = false;
   bool _reducedMotion = false;
-  int _textSizeIndex = 1; // 0=Small, 1=Medium, 2=Large
-  int _darkModeIndex = 0; // 0=System, 1=Light, 2=Dark
+  int _textSizeIndex = 1;
+  int _darkModeIndex = 0;
 
   static const _textSizeLabels = ['Small', 'Medium', 'Large'];
   static const _darkModeLabels = ['System', 'Light', 'Dark'];
@@ -60,128 +60,119 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 18,
+            color: AppColors.textPrimary,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
-              Text('SETTINGS', style: AppTypography.sectionHeading),
-              const SizedBox(height: 24),
+              const SizedBox(height: 4),
+              Text('Settings', style: AppTypography.sectionHeading),
+              const SizedBox(height: 28),
               // Notifications
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  'Notifications',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                subtitle: Text(
-                  'Daily reading reminders',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+              _SwitchRow(
+                title: 'Notifications',
+                subtitle: 'Daily reading reminders',
                 value: _notificationsEnabled,
-                activeTrackColor: AppColors.primary,
-                activeThumbColor: AppColors.surface,
                 onChanged: _onNotificationsChanged,
               ),
-              _settingDivider(),
+              const SizedBox(height: 18),
               // Text Size
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Text Size',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _SegmentedToggle(
-                      labels: _textSizeLabels,
-                      selectedIndex: _textSizeIndex,
-                      onSelected: (index) {
-                        setState(() => _textSizeIndex = index);
-                      },
-                    ),
-                  ],
+              _SettingGroup(
+                title: 'Text Size',
+                child: _SegmentedToggle(
+                  labels: _textSizeLabels,
+                  selectedIndex: _textSizeIndex,
+                  onSelected: (index) {
+                    setState(() => _textSizeIndex = index);
+                  },
                 ),
               ),
-              _settingDivider(),
+              const SizedBox(height: 18),
               // Reduced Motion
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  'Reduced Motion',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                subtitle: Text(
-                  'Minimize animations',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+              _SwitchRow(
+                title: 'Reduced Motion',
+                subtitle: 'Minimize animations',
                 value: _reducedMotion,
-                activeTrackColor: AppColors.primary,
-                activeThumbColor: AppColors.surface,
                 onChanged: (value) {
                   setState(() => _reducedMotion = value);
                 },
               ),
-              _settingDivider(),
-              // Dark Mode
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Appearance',
-                      style: AppTypography.body.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _SegmentedToggle(
-                      labels: _darkModeLabels,
-                      selectedIndex: _darkModeIndex,
-                      onSelected: (index) {
-                        setState(() => _darkModeIndex = index);
-                      },
-                    ),
-                  ],
+              const SizedBox(height: 18),
+              // Appearance
+              _SettingGroup(
+                title: 'Appearance',
+                child: _SegmentedToggle(
+                  labels: _darkModeLabels,
+                  selectedIndex: _darkModeIndex,
+                  onSelected: (index) {
+                    setState(() => _darkModeIndex = index);
+                  },
                 ),
               ),
-              _settingDivider(),
+              const SizedBox(height: 26),
               // Reset Profile
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.warning_amber_rounded,
-                  color: AppColors.danger,
-                  size: 22,
-                ),
-                title: Text(
-                  'Reset Profile',
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.danger,
-                  ),
-                ),
-                subtitle: Text(
-                  'Clear all progress and preferences',
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+              GestureDetector(
                 onTap: () => _showResetDialog(context),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.danger.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppColors.danger,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Reset Profile',
+                              style: AppTypography.bodyEmphasis.copyWith(
+                                color: AppColors.danger,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Clear all progress and preferences',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.danger,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 40),
             ],
@@ -191,24 +182,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _settingDivider() {
-    return const Divider(
-      height: 1,
-      color: AppColors.border,
-    );
-  }
-
   void _showResetDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceCard,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
         ),
         title: Text(
           'Reset Profile?',
-          style: AppTypography.cardTitle,
+          style: AppTypography.titleMedium.copyWith(
+            color: AppColors.textPrimary,
+          ),
         ),
         content: Text(
           'This will clear all your reading progress, bookmarks, and '
@@ -221,7 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               'Cancel',
               style: AppTypography.button.copyWith(
-                color: AppColors.primary,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -250,6 +236,96 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.bodyEmphasis.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            activeTrackColor: AppColors.primary,
+            activeThumbColor: AppColors.textOnPrimary,
+            inactiveTrackColor: AppColors.surfaceMuted,
+            inactiveThumbColor: AppColors.textMuted,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingGroup extends StatelessWidget {
+  const _SettingGroup({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTypography.bodyEmphasis.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 class _SegmentedToggle extends StatelessWidget {
   const _SegmentedToggle({
     required this.labels,
@@ -264,10 +340,11 @@ class _SegmentedToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 36,
+      height: 40,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        border: Border.all(color: AppColors.border),
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: List.generate(labels.length, (index) {
@@ -276,20 +353,20 @@ class _SegmentedToggle extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onSelected(index),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 180),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                margin: const EdgeInsets.all(2),
                 alignment: Alignment.center,
                 child: Text(
                   labels[index],
                   style: AppTypography.caption.copyWith(
                     color: isSelected
                         ? AppColors.textOnPrimary
-                        : AppColors.textTertiary,
+                        : AppColors.textSecondary,
                     fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                        isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),

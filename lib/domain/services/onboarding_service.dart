@@ -11,6 +11,7 @@ class OnboardingService {
       'user_profile',
       {
         'id': 1,
+        'display_name': data['displayName'] as String?,
         'selected_interests': jsonEncode(data['interests']),
         'selected_goals': jsonEncode(data['goals']),
         'selected_improvement_areas': jsonEncode(data['improvements']),

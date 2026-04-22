@@ -134,6 +134,7 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 | 2026-04-16 | Tag-based recommendation engine | Match onboarding answers against book interestTags, goalTags, improvementTags |
 | 2026-04-16 | Apple-inspired design system | DESIGN.md: dark/light sections, Apple Blue accent, SF Pro typography, pill CTAs |
 | 2026-04-16 | Switched to Luxury dark design | SKILL.md: pure black surface, #FAFAFA primary, Oswald headings, sharp edges, monochromatic, gold accent |
+| 2026-04-22 | Switched to Speedread cinematic design | Claude Design HTML prototype: deep cinematic dark #0A0A0C, Fraunces serif + Space Grotesk, per-book accent palettes, vertical progress rails, typographic book covers, floating glass pill tab bar |
 
 ---
 
