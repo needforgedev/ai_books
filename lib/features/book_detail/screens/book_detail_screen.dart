@@ -134,29 +134,30 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               ),
             ),
           ),
-          SafeArea(
-            child: Column(
-              children: [
-                // Top bar: back + bookmark
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Row(
-                    children: [
-                      _CircleIcon(
-                        icon: Icons.arrow_back_rounded,
-                        onTap: () => Navigator.of(context).maybePop(),
-                      ),
-                      const Spacer(),
-                      _CircleIcon(
-                        icon: Icons.bookmark_outline_rounded,
-                        onTap: () {},
-                      ),
-                    ],
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Top bar: back + bookmark
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Row(
+                      children: [
+                        _CircleIcon(
+                          icon: Icons.arrow_back_rounded,
+                          onTap: () => Navigator.of(context).maybePop(),
+                        ),
+                        const Spacer(),
+                        _CircleIcon(
+                          icon: Icons.bookmark_outline_rounded,
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                     children: [
                       // Cover centered
                       Center(
@@ -258,6 +259,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 ),
               ],
             ),
+          ),
           ),
           // Sticky bottom CTA
           Positioned(

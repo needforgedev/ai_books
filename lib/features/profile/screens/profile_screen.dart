@@ -17,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
 
+  String _displayName = '';
   List<String> _interests = [];
   List<String> _goals = [];
   List<String> _improvements = [];
@@ -37,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profileRows = await db.query('user_profile', limit: 1);
     if (profileRows.isNotEmpty) {
       final profile = profileRows.first;
+      final nameRaw = profile['display_name'] as String?;
       final interestsRaw = profile['selected_interests'] as String?;
       final goalsRaw = profile['selected_goals'] as String?;
       final improvementsRaw =
@@ -44,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final comfortRaw = profile['reading_comfort'] as String?;
       final createdAtRaw = profile['created_at'] as String?;
 
+      _displayName = (nameRaw ?? '').trim();
       _interests = _decodeJsonList(interestsRaw);
       _goals = _decodeJsonList(goalsRaw);
       _improvements = _decodeJsonList(improvementsRaw);
@@ -151,6 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     width: 80,
                     height: 80,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: AppColors.surfaceCard,
                       shape: BoxShape.circle,
@@ -158,15 +162,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.primary.withValues(alpha: 0.2),
                       ),
                     ),
-                    child: const Icon(
-                      Icons.person_rounded,
-                      color: AppColors.primary,
-                      size: 36,
-                    ),
+                    child: _displayName.isNotEmpty
+                        ? Text(
+                            _displayName.substring(0, 1).toUpperCase(),
+                            style: AppTypography.tileHeading.copyWith(
+                              color: AppColors.primary,
+                              fontSize: 32,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person_rounded,
+                            color: AppColors.primary,
+                            size: 36,
+                          ),
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'Reader',
+                    _displayName.isNotEmpty ? _displayName : 'Reader',
                     style: AppTypography.titleLarge.copyWith(
                       fontSize: 22,
                       color: AppColors.textPrimary,
