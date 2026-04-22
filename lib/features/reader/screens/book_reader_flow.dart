@@ -110,14 +110,19 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
       await ProgressService.finishBook(_book!.id);
       if (!mounted) return;
 
-      final gains = _checkpoints.map((c) => c.title).toList();
-
-      String nextBookTitle = 'Explore more books';
-      if (_book!.nextBookIds.isNotEmpty) {
-        final nextBook =
-            await ContentService.getBook(_book!.nextBookIds.first);
-        if (nextBook != null) nextBookTitle = nextBook.title;
+      // Pick the most memorable quote as the takeaway — last checkpoint's
+      // key quote, else first non-empty, else last checkpoint title.
+      String? takeawayQuote;
+      for (final c in _checkpoints.reversed) {
+        if (c.keyQuote != null && c.keyQuote!.trim().isNotEmpty) {
+          takeawayQuote = c.keyQuote!.trim();
+          break;
+        }
       }
+      takeawayQuote ??= _checkpoints.last.title;
+
+      final String? nextBookId =
+          _book!.nextBookIds.isNotEmpty ? _book!.nextBookIds.first : null;
 
       if (!mounted) return;
       await Navigator.push(
@@ -125,20 +130,13 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
         MaterialPageRoute(
           builder: (_) => BookCompleteScreen(
             bookTitle: _book!.title,
-            gains: gains,
-            nextBookTitle: nextBookTitle,
+            author: _book!.author,
             bookId: _book!.id,
             categoryId: _book!.categoryId,
-            author: _book!.author,
-            onReadNext: () {
-              // Close the reader stack and let the user land on Home;
-              // BookCompleteScreen's own "Back home" button already handles
-              // the deep pop + tab switch via MainShell.goToTab.
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            onExplore: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
+            totalCheckpoints: _checkpoints.length,
+            totalMinutes: _book!.estimatedMinutes,
+            takeawayQuote: takeawayQuote!,
+            nextBookId: nextBookId,
           ),
         ),
       );
