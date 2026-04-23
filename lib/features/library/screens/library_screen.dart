@@ -6,6 +6,7 @@ import 'package:ai_books/domain/models/models.dart';
 import 'package:ai_books/domain/services/content_service.dart';
 import 'package:ai_books/features/book_detail/screens/book_detail_screen.dart';
 import 'package:ai_books/features/library/screens/category_detail_screen.dart';
+import 'package:ai_books/features/search/screens/search_screen.dart';
 
 /// The library screen — cinematic redesign.
 class LibraryScreen extends StatefulWidget {
@@ -114,7 +115,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
             const SizedBox(height: 10),
             Text('Library', style: AppTypography.sectionHeading),
             const SizedBox(height: 18),
-            _SearchBar(),
+            _SearchBar(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SearchScreen()),
+                );
+              },
+            ),
             const SizedBox(height: 28),
             Text('Categories', style: AppTypography.titleLarge),
             const SizedBox(height: 12),
@@ -146,32 +153,40 @@ class _LibraryScreenState extends State<LibraryScreen> {
 }
 
 class _SearchBar extends StatelessWidget {
+  const _SearchBar({required this.onTap});
+
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0x0FFFFFFF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.search_rounded,
-            size: 18,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Search 80+ books...',
-              style: AppTypography.body.copyWith(
-                color: AppColors.textMuted,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0x0FFFFFFF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.search_rounded,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Search books, authors, topics',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

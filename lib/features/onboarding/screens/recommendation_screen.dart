@@ -10,6 +10,7 @@ class RecommendationScreen extends StatelessWidget {
     super.key,
     required this.onStartReading,
     required this.onSeeOtherPicks,
+    this.onExplore,
     this.book,
     this.reasonText = '',
     this.alternateCount = 2,
@@ -17,6 +18,9 @@ class RecommendationScreen extends StatelessWidget {
 
   final VoidCallback onStartReading;
   final VoidCallback onSeeOtherPicks;
+
+  /// Fired when the engine returned no book and the user taps "Explore library".
+  final VoidCallback? onExplore;
   final BookEntry? book;
   final String reasonText;
   final int alternateCount;
@@ -24,17 +28,21 @@ class RecommendationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = book;
-    final palette = b != null
-        ? BookVisuals.forBook(b.id, categoryId: b.categoryId)
-        : BookPalette.defaultPalette;
+
+    // Engine returned nothing — surface an honest empty state that
+    // routes the user to the library.
+    if (b == null) {
+      return _NoMatchState(onExplore: onExplore);
+    }
+
+    final palette = BookVisuals.forBook(b.id, categoryId: b.categoryId);
     final accent = palette.accent;
 
-    // Fallback display values (when book is null during initial frames)
-    final title = b?.title ?? 'Atomic Habits';
-    final author = b?.author ?? 'James Clear';
-    final difficulty = b?.difficulty ?? 'Beginner';
-    final minutes = b?.estimatedMinutes ?? 22;
-    final categoryLabel = _categoryLabel(b?.categoryId ?? 'business');
+    final title = b.title;
+    final author = b.author;
+    final difficulty = b.difficulty;
+    final minutes = b.estimatedMinutes;
+    final categoryLabel = _categoryLabel(b.categoryId);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -169,6 +177,95 @@ class RecommendationScreen extends StatelessWidget {
       default:
         return id.replaceAll('_', ' ');
     }
+  }
+}
+
+class _NoMatchState extends StatelessWidget {
+  const _NoMatchState({required this.onExplore});
+
+  final VoidCallback? onExplore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              Text(
+                'YOUR MATCH',
+                style: AppTypography.eyebrow.copyWith(color: AppColors.primary),
+              ),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.auto_stories_rounded,
+                        size: 64,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'No match yet',
+                        style: AppTypography.tileHeading,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          "We couldn't lock in a pick from your answers. Take a look around — you'll know the right book when you see it.",
+                          style: AppTypography.body.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: onExplore,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textOnPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Explore library',
+                        style: AppTypography.buttonLarge,
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: AppColors.textOnPrimary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

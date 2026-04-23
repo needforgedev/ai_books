@@ -6,6 +6,7 @@ import 'package:ai_books/app/theme/app_typography.dart';
 import 'package:ai_books/core/widgets/book_cover.dart';
 import 'package:ai_books/domain/models/models.dart';
 import 'package:ai_books/domain/services/content_service.dart';
+import 'package:ai_books/domain/services/onboarding_service.dart';
 import 'package:ai_books/domain/services/progress_service.dart';
 import 'package:ai_books/domain/services/streak_service.dart';
 import 'package:ai_books/features/book_detail/screens/book_detail_screen.dart';
@@ -48,6 +49,7 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
   int _streakDays = 0;
   int _booksFinished = 0;
   BookEntry? _nextBook;
+  String _displayName = '';
 
   static const Color _bgBase = Color(0xFF08080A);
 
@@ -79,6 +81,7 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
   Future<void> _loadAsyncData() async {
     final streak = await StreakService.getCurrentStreak();
     final finished = await ProgressService.getFinishedBookCount();
+    final profile = await OnboardingService.getUserProfile();
     BookEntry? next;
     if (widget.nextBookId != null) {
       next = await ContentService.getBook(widget.nextBookId!);
@@ -88,6 +91,7 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
       _streakDays = streak;
       _booksFinished = finished;
       _nextBook = next;
+      _displayName = ((profile?['display_name'] as String?) ?? '').trim();
     });
   }
 
@@ -129,6 +133,7 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
       totalCheckpoints: widget.totalCheckpoints,
       totalMinutes: widget.totalMinutes,
       streakDays: _streakDays,
+      displayName: _displayName,
     );
   }
 

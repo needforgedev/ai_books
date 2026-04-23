@@ -17,6 +17,7 @@ class ShareSheet extends StatefulWidget {
     required this.totalCheckpoints,
     required this.totalMinutes,
     required this.streakDays,
+    required this.displayName,
   });
 
   final String bookTitle;
@@ -26,6 +27,7 @@ class ShareSheet extends StatefulWidget {
   final int totalCheckpoints;
   final int totalMinutes;
   final int streakDays;
+  final String displayName;
 
   /// Show as a modal bottom sheet.
   static Future<void> show(
@@ -37,6 +39,7 @@ class ShareSheet extends StatefulWidget {
     required int totalCheckpoints,
     required int totalMinutes,
     required int streakDays,
+    required String displayName,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -51,6 +54,7 @@ class ShareSheet extends StatefulWidget {
         totalCheckpoints: totalCheckpoints,
         totalMinutes: totalMinutes,
         streakDays: streakDays,
+        displayName: displayName,
       ),
     );
   }
@@ -61,6 +65,50 @@ class ShareSheet extends StatefulWidget {
 
 class _ShareSheetState extends State<ShareSheet> {
   int _platformIndex = 0;
+  bool _isEditingCaption = false;
+
+  late final TextEditingController _captionController;
+  late final FocusNode _captionFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    _captionController = TextEditingController(
+      text: 'Just finished another one 📚',
+    );
+    _captionFocus = FocusNode();
+    _captionFocus.addListener(() {
+      if (!_captionFocus.hasFocus && _isEditingCaption) {
+        setState(() => _isEditingCaption = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _captionController.dispose();
+    _captionFocus.dispose();
+    super.dispose();
+  }
+
+  void _beginCaptionEdit() {
+    setState(() => _isEditingCaption = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _captionFocus.requestFocus();
+    });
+  }
+
+  void _endCaptionEdit() {
+    _captionFocus.unfocus();
+    setState(() => _isEditingCaption = false);
+  }
+
+  String get _handle {
+    final name = widget.displayName.trim();
+    if (name.isEmpty) return '@reader · speedread.app';
+    final slug = name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    return '@$slug · speedread.app';
+  }
 
   static const List<_Platform> _platforms = [
     _Platform(
@@ -213,39 +261,77 @@ class _ShareSheetState extends State<ShareSheet> {
                   totalMinutes: widget.totalMinutes,
                   streakDays: widget.streakDays,
                   bookAccent: bookAccent,
+                  handle: _handle,
                 ),
               ),
               const SizedBox(height: 14),
               // Caption edit row
-              Container(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: _isEditingCaption
+                        ? bookAccent.withValues(alpha: 0.5)
+                        : Colors.white.withValues(alpha: 0.06),
                   ),
                 ),
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        'Just finished another one 📚',
-                        style: AppTypography.body.copyWith(
-                          fontSize: 12.5,
-                          color: AppColors.textPrimary
-                              .withValues(alpha: 0.75),
-                        ),
-                      ),
+                      child: _isEditingCaption
+                          ? TextField(
+                              controller: _captionController,
+                              focusNode: _captionFocus,
+                              cursorColor: bookAccent,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _endCaptionEdit(),
+                              style: AppTypography.body.copyWith(
+                                fontSize: 12.5,
+                                color: AppColors.textPrimary
+                                    .withValues(alpha: 0.85),
+                              ),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                              ),
+                            )
+                          : GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: _beginCaptionEdit,
+                              child: Text(
+                                _captionController.text.isEmpty
+                                    ? 'Add a caption…'
+                                    : _captionController.text,
+                                style: AppTypography.body.copyWith(
+                                  fontSize: 12.5,
+                                  color: _captionController.text.isEmpty
+                                      ? AppColors.textMuted
+                                      : AppColors.textPrimary
+                                          .withValues(alpha: 0.75),
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                     ),
+                    const SizedBox(width: 8),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: _isEditingCaption
+                          ? _endCaptionEdit
+                          : _beginCaptionEdit,
                       child: Text(
-                        'Edit',
+                        _isEditingCaption ? 'Done' : 'Edit',
                         style: AppTypography.caption.copyWith(
                           fontSize: 11,
                           color: bookAccent,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -351,6 +437,7 @@ class _PosterPreview extends StatelessWidget {
     required this.totalMinutes,
     required this.streakDays,
     required this.bookAccent,
+    required this.handle,
   });
 
   final String bookTitle;
@@ -361,6 +448,7 @@ class _PosterPreview extends StatelessWidget {
   final int totalMinutes;
   final int streakDays;
   final Color bookAccent;
+  final String handle;
 
   @override
   Widget build(BuildContext context) {
@@ -609,7 +697,7 @@ class _PosterPreview extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '@nabeel · speedread.app',
+                  handle,
                   style: AppTypography.eyebrow.copyWith(
                     fontSize: 9.5,
                     letterSpacing: 1.2,

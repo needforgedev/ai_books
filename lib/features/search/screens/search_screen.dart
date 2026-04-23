@@ -21,12 +21,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<BookEntry> _results = [];
   Map<String, CategoryEntry> _categoriesById = {};
 
-  static const List<String> _filters = [
-    'Books',
-    'Authors',
-    'Categories',
-    'Goals',
-  ];
+  static const List<String> _filters = ['Books', 'Authors', 'Categories'];
 
   @override
   void initState() {
