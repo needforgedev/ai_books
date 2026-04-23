@@ -34,6 +34,7 @@ class ContentService {
       'isFeatured': row['is_featured'],
       'nextBookIds': row['next_book_ids']?.toString() ?? '[]',
       'sortOrder': row['sort_order'],
+      'mindmapAssetPath': row['mindmap_asset_path'],
     };
   }
 

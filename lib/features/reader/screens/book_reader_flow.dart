@@ -10,6 +10,7 @@ import 'package:ai_books/domain/services/bookmark_service.dart';
 import 'package:ai_books/domain/services/streak_service.dart';
 import 'package:ai_books/features/reader/screens/checkpoint_complete_screen.dart';
 import 'package:ai_books/features/reader/screens/book_complete_screen.dart';
+import 'package:ai_books/features/reader/screens/mindmap_screen.dart';
 import 'package:ai_books/features/reader/screens/quote_decode_screen.dart';
 
 /// Manages the full reading flow for a book: loads checkpoints, shows them
@@ -217,6 +218,23 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
     );
   }
 
+  void _openMindMap() {
+    final book = _book;
+    final path = book?.mindmapAssetPath;
+    if (book == null || path == null || path.isEmpty) return;
+    final palette =
+        BookVisuals.forBook(book.id, categoryId: book.categoryId);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MindMapScreen(
+          assetPath: path,
+          bookTitle: book.title,
+          accent: palette.accent,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -372,6 +390,41 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
                               ),
                               const SizedBox(height: 22),
                             ],
+                            // Optional illustration — rendered right below
+                            // the checkpoint's explanation text when the
+                            // checkpoint has a bundled image asset.
+                            if (checkpoint.imageAssetOrUrl != null &&
+                                checkpoint.imageAssetOrUrl!.isNotEmpty) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: palette.ink.withValues(alpha: 0.04),
+                                    border: Border.all(
+                                      color: palette.ink
+                                          .withValues(alpha: 0.12),
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Image.asset(
+                                    checkpoint.imageAssetOrUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: Text(
+                                        'Image unavailable',
+                                        style: AppTypography.caption.copyWith(
+                                          color: palette.ink
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                            ],
                             // Modern example
                             if (checkpoint.modernExample != null &&
                                 checkpoint.modernExample!.isNotEmpty) ...[
@@ -469,6 +522,19 @@ class _BookReaderFlowState extends State<BookReaderFlow> {
                                   height: 1.4,
                                   fontStyle: FontStyle.italic,
                                 ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            // Mind map teaser — shown ONLY on the last
+                            // checkpoint (right before "Finish book") when
+                            // the book has a bundled mind map HTML asset.
+                            if (_isLastCheckpoint &&
+                                _book!.mindmapAssetPath != null &&
+                                _book!.mindmapAssetPath!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              _MindMapTeaserCard(
+                                palette: palette,
+                                onTap: _openMindMap,
                               ),
                               const SizedBox(height: 20),
                             ],
@@ -693,6 +759,86 @@ class _ReaderBottomBar extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Teaser card shown on the last checkpoint inviting the reader to open
+/// the mind map before tapping "Finish book."
+class _MindMapTeaserCard extends StatelessWidget {
+  const _MindMapTeaserCard({required this.palette, required this.onTap});
+
+  final BookPalette palette;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              palette.accent.withValues(alpha: 0.16),
+              palette.accent.withValues(alpha: 0.04),
+            ],
+          ),
+          border: Border.all(color: palette.accent.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: palette.accent.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: palette.accent.withValues(alpha: 0.55),
+                ),
+              ),
+              child: Icon(
+                Icons.account_tree_rounded,
+                size: 20,
+                color: palette.accent,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'MIND MAP',
+                    style: AppTypography.eyebrow.copyWith(
+                      color: palette.accent,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'See the whole book as one picture',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: palette.ink,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_rounded,
+              size: 16,
+              color: palette.accent,
             ),
           ],
         ),

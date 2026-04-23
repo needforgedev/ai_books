@@ -1,0 +1,4 @@
+# Drop per-checkpoint illustration images here.
+# Filename should match the checkpoint id, e.g. atomic_habits_cp2.png
+# Set `image_asset_or_url` in assets/seed/checkpoints.json to the asset path.
+# See visuals_plan.md for specs + setup steps.

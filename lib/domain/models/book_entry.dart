@@ -18,6 +18,7 @@ class BookEntry {
   final bool isFeatured;
   final List<String> nextBookIds;
   final int sortOrder;
+  final String? mindmapAssetPath;
 
   const BookEntry({
     required this.id,
@@ -37,6 +38,7 @@ class BookEntry {
     required this.isFeatured,
     required this.nextBookIds,
     required this.sortOrder,
+    this.mindmapAssetPath,
   });
 
   BookEntry copyWith({
@@ -57,6 +59,7 @@ class BookEntry {
     bool? isFeatured,
     List<String>? nextBookIds,
     int? sortOrder,
+    String? mindmapAssetPath,
   }) {
     return BookEntry(
       id: id ?? this.id,
@@ -76,6 +79,7 @@ class BookEntry {
       isFeatured: isFeatured ?? this.isFeatured,
       nextBookIds: nextBookIds ?? this.nextBookIds,
       sortOrder: sortOrder ?? this.sortOrder,
+      mindmapAssetPath: mindmapAssetPath ?? this.mindmapAssetPath,
     );
   }
 
@@ -98,6 +102,7 @@ class BookEntry {
       'isFeatured': isFeatured ? 1 : 0,
       'nextBookIds': jsonEncode(nextBookIds),
       'sortOrder': sortOrder,
+      'mindmapAssetPath': mindmapAssetPath,
     };
   }
 
@@ -123,6 +128,7 @@ class BookEntry {
       nextBookIds:
           List<String>.from(jsonDecode(map['nextBookIds'] as String)),
       sortOrder: map['sortOrder'] as int,
+      mindmapAssetPath: map['mindmapAssetPath'] as String?,
     );
   }
 

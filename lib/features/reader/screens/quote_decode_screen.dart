@@ -73,71 +73,79 @@ class QuoteDecodeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 60),
-                  // Big quote icon
-                  Center(
-                    child: Icon(
-                      Icons.format_quote_rounded,
-                      size: 64,
-                      color: palette.accent.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Quote text
-                  Text(
-                    quote,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.displayItalic(
-                      32,
-                      color: AppColors.textPrimary,
-                    ).copyWith(
-                      height: 1.2,
-                      letterSpacing: -1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Center(
-                    child: Text(
-                      '— $author'.toUpperCase(),
-                      style: AppTypography.eyebrow.copyWith(
-                        color: palette.accent,
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(top: 60, bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Big quote icon
+                          Center(
+                            child: Icon(
+                              Icons.format_quote_rounded,
+                              size: 64,
+                              color: palette.accent.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Quote text
+                          Text(
+                            quote,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.displayItalic(
+                              32,
+                              color: AppColors.textPrimary,
+                            ).copyWith(
+                              height: 1.2,
+                              letterSpacing: -1.0,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Center(
+                            child: Text(
+                              '— $author'.toUpperCase(),
+                              style: AppTypography.eyebrow.copyWith(
+                                color: palette.accent,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 36),
+                          // "What this means" card
+                          Container(
+                            padding: const EdgeInsets.all(22),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.08),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'WHAT THIS MEANS',
+                                  style: AppTypography.eyebrow.copyWith(
+                                    color: palette.accent,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  meaning,
+                                  style: AppTypography.subHeading.copyWith(
+                                    fontSize: 20,
+                                    color: AppColors.textPrimary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 36),
-                  // "What this means" card
-                  Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'WHAT THIS MEANS',
-                          style: AppTypography.eyebrow.copyWith(
-                            color: palette.accent,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          meaning,
-                          style: AppTypography.subHeading.copyWith(
-                            fontSize: 20,
-                            color: AppColors.textPrimary,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  // Bottom buttons
+                  // Bottom buttons (fixed)
                   Row(
                     children: [
                       Expanded(

@@ -63,6 +63,8 @@ flutter:
   assets:
     - assets/seed/
     - assets/images/covers/
+    - assets/images/illustrations/
+    - assets/mindmaps/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

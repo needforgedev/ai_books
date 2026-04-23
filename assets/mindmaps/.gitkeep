@@ -1,0 +1,3 @@
+# Drop book mind map HTML files here, one per book.
+# Set `mindmap_asset_path` in assets/seed/books.json to point at the file.
+# See visuals_plan.md for format + setup steps.

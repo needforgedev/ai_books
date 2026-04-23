@@ -73,6 +73,7 @@ class DatabaseHelper {
         is_featured INTEGER DEFAULT 0,
         next_book_ids TEXT,
         sort_order INTEGER,
+        mindmap_asset_path TEXT,
         FOREIGN KEY (category_id) REFERENCES categories(id)
       )
     ''');
