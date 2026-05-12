@@ -1,4 +1,4 @@
-package com.example.ai_books
+package com.speedread.app
 
 import io.flutter.embedding.android.FlutterActivity
 

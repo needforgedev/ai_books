@@ -1,0 +1,10 @@
+# Copy this file to `android/key.properties` and fill in the real values.
+# `android/key.properties` is gitignored — never commit it.
+#
+# `storeFile` is the path to the .jks file, relative to `android/app/`.
+# Keep the .jks file outside the repo or store it encrypted; if you lose it
+# you cannot publish updates to the same Play listing.
+storePassword=REPLACE_WITH_KEYSTORE_PASSWORD
+keyPassword=REPLACE_WITH_KEY_PASSWORD
+keyAlias=upload
+storeFile=upload-keystore.jks

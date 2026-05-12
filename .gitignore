@@ -44,6 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android signing secrets — keep the keystore + passwords out of source control.
+/android/key.properties
+/android/app/upload-keystore.jks
+/android/app/release.keystore
+*.jks
+
 .agents/
 agents.md
 skills-lock.json

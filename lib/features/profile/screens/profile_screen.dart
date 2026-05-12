@@ -221,6 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ignore: unused_element
   void _onGoGold() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Premium tier — coming soon')),
@@ -300,12 +301,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 22),
 
-            // ===== Premium card =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _PremiumCard(onTap: _onGoGold),
-            ),
-            const SizedBox(height: 22),
+            // ===== Premium card — temporarily unwired (no real subscription system in v1) =====
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 20),
+            //   child: _PremiumCard(onTap: _onGoGold),
+            // ),
+            // const SizedBox(height: 22),
 
             // ===== Stat trio =====
             Padding(
@@ -716,9 +717,11 @@ class _PrefRow extends StatelessWidget {
 }
 
 // ============================================================================
-// Premium membership card — gilded gradient with shimmer
+// Premium membership card — gilded gradient with shimmer.
+// Kept for future re-wiring; currently unwired from the Profile screen.
 // ============================================================================
 
+// ignore: unused_element
 class _PremiumCard extends StatelessWidget {
   const _PremiumCard({required this.onTap});
 

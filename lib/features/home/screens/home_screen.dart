@@ -24,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
+  bool _hasLoadError = false;
 
   String _displayName = '';
 
@@ -48,6 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
+    if (mounted && !_isLoading) {
+      setState(() {
+        _isLoading = true;
+        _hasLoadError = false;
+      });
+    }
     try {
       final results = await Future.wait([
         OnboardingService.getUserProfile(), // 0
@@ -139,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _hasLoadError = true;
       });
     }
   }
@@ -220,6 +228,51 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppColors.surface,
         child: const Center(
           child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    if (_hasLoadError) {
+      return Container(
+        color: AppColors.surface,
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.cloud_off_rounded,
+                    color: AppColors.textMuted,
+                    size: 40,
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    "Couldn't load your library",
+                    style: AppTypography.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Pull yourself out and back in, or try again.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  TextButton(
+                    onPressed: _loadData,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                    ),
+                    child: Text('Try again', style: AppTypography.button),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       );
     }

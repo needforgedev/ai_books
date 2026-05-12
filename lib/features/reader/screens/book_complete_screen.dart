@@ -123,6 +123,7 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
     ));
   }
 
+  // ignore: unused_element
   void _onOpenShare() {
     ShareSheet.show(
       context,
@@ -137,6 +138,7 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
     );
   }
 
+  // ignore: unused_element
   void _onSave() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Saved to your shelf')),
@@ -239,8 +241,9 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 14),
+                              // INSIGHT stat temporarily unwired (no real insight metric yet).
                               _StatsTrio(
-                                insight: '+120',
+                                insight: null,
                                 insightColor: bookAccent,
                                 streak: '$_streakDays',
                                 booksRead: '$_booksFinished',
@@ -250,11 +253,14 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
                                 accent: bookAccent,
                                 quote: widget.takeawayQuote,
                               ),
-                              const SizedBox(height: 12),
-                              _FlexWorthyCard(
-                                onTap: _onOpenShare,
-                                shimmer: _shimmerController,
-                              ),
+                              // FLEX-WORTHY share card temporarily unwired
+                              // until real share (share_plus + RepaintBoundary
+                              // poster export) lands. Card + ShareSheet kept.
+                              // const SizedBox(height: 12),
+                              // _FlexWorthyCard(
+                              //   onTap: _onOpenShare,
+                              //   shimmer: _shimmerController,
+                              // ),
                               const SizedBox(height: 8),
                             ],
                           ),
@@ -271,9 +277,9 @@ class _BookCompleteScreenState extends State<BookCompleteScreen>
                             onTap: _onReadNext,
                           ),
                           const SizedBox(height: 8),
+                          // Save win temporarily unwired — only "Back home" shown for now.
                           _DemotedActions(
                             onBackHome: _onBackHome,
-                            onSave: _onSave,
                           ),
                         ],
                       ),
@@ -651,13 +657,13 @@ class _RaysPainter extends CustomPainter {
 
 class _StatsTrio extends StatelessWidget {
   const _StatsTrio({
-    required this.insight,
+    this.insight,
     required this.insightColor,
     required this.streak,
     required this.booksRead,
   });
 
-  final String insight;
+  final String? insight;
   final Color insightColor;
   final String streak;
   final String booksRead;
@@ -667,16 +673,19 @@ class _StatsTrio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showInsight = insight != null && insight!.isNotEmpty;
     return Row(
       children: [
-        Expanded(
-          child: _RewardStat(
-            value: insight,
-            label: 'INSIGHT',
-            tint: insightColor,
+        if (showInsight) ...[
+          Expanded(
+            child: _RewardStat(
+              value: insight!,
+              label: 'INSIGHT',
+              tint: insightColor,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
+          const SizedBox(width: 8),
+        ],
         Expanded(
           child: _RewardStat(
             value: streak,
@@ -821,9 +830,11 @@ class _TakeawayStrip extends StatelessWidget {
 }
 
 // ============================================================================
-// FLEX-WORTHY SHARE CARD — signature engagement element
+// FLEX-WORTHY SHARE CARD — signature engagement element.
+// Kept for future re-wiring once real share is implemented.
 // ============================================================================
 
+// ignore: unused_element
 class _FlexWorthyCard extends StatelessWidget {
   const _FlexWorthyCard({required this.onTap, required this.shimmer});
 
@@ -1449,10 +1460,13 @@ class _NextBookCta extends StatelessWidget {
 // ============================================================================
 
 class _DemotedActions extends StatelessWidget {
-  const _DemotedActions({required this.onBackHome, required this.onSave});
+  // `onSave` is kept here so the "Save win" action can be re-wired later
+  // without touching this widget; pass it in to render the bookmark button.
+  // ignore: unused_element_parameter
+  const _DemotedActions({required this.onBackHome, this.onSave});
 
   final VoidCallback onBackHome;
-  final VoidCallback onSave;
+  final VoidCallback? onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -1474,34 +1488,36 @@ class _DemotedActions extends StatelessWidget {
           ),
           child: Text('Back home', style: style),
         ),
-        Text(
-          '·',
-          style: AppTypography.caption.copyWith(
-            fontSize: 14,
-            color: AppColors.textDim,
+        if (onSave != null) ...[
+          Text(
+            '·',
+            style: AppTypography.caption.copyWith(
+              fontSize: 14,
+              color: AppColors.textDim,
+            ),
           ),
-        ),
-        TextButton(
-          onPressed: onSave,
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.textSecondary,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            minimumSize: const Size(0, 32),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          TextButton(
+            onPressed: onSave,
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textSecondary,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              minimumSize: const Size(0, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.bookmark_outline_rounded,
+                  size: 12,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 5),
+                Text('Save', style: style),
+              ],
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.bookmark_outline_rounded,
-                size: 12,
-                color: AppColors.textSecondary.withValues(alpha: 0.5),
-              ),
-              const SizedBox(width: 5),
-              Text('Save', style: style),
-            ],
-          ),
-        ),
+        ],
       ],
     );
   }

@@ -138,7 +138,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // Top bar: back + bookmark
+                  // Top bar: back. (Book-level bookmark temporarily unwired —
+                  // checkpoint-level bookmarks live inside the reader.)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: Row(
@@ -148,10 +149,6 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           onTap: () => Navigator.of(context).maybePop(),
                         ),
                         const Spacer(),
-                        _CircleIcon(
-                          icon: Icons.bookmark_outline_rounded,
-                          onTap: () {},
-                        ),
                       ],
                     ),
                   ),
