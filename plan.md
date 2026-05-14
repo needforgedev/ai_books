@@ -182,7 +182,7 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 | 2026-04-22 | 4-tab navigation (drop Search tab) | Home / Library / Saved / You. Search is reachable from Library |
 | 2026-04-23 | Native mind map renderer (no WebView) | Better mobile UX, dark theme matched, no JS deps. Outline view on phones, horizontal tree on tablets |
 | 2026-04-23 | Replaced 6 individual onboarding question screens with one generic `OnboardingQuestionScreen` | Less duplication, easier to maintain |
-| 2026-05-11 | Bundle ID set to `com.speedread.app` (was `com.example.ai_books`) | Required for TestFlight / Play Console. Kotlin package moved from `com.example.ai_books` to `com.speedread.app`. |
+| 2026-05-11 | Bundle ID set to `dev.needforge.speedread` (was `com.example.ai_books`, briefly `com.speedread.app`) | Required for TestFlight / Play Console. `com.speedread.app` was already claimed on Play, so switched to `dev.needforge.speedread`. Kotlin package moved to `dev/needforge/speedread`, iOS `PRODUCT_BUNDLE_IDENTIFIER` updated in all 6 pbxproj entries. |
 | 2026-05-11 | Notifications switched to `zonedSchedule` with device-local time-of-day, default 20:00 | True daily reminder at a deliberate time instead of "24h from when the user toggled the switch". Falls back to `periodicallyShow` if exact-alarm is denied on Android. |
 | 2026-05-11 | Stubs unwired (Premium card, +120 INSIGHT, Save win, top-bar bookmark on book detail, FLEX-WORTHY share card) — code preserved | Clears visible "soon" UI for a closed beta without losing the design work; re-enabling later is a one-line change at each call site. |
 
@@ -297,4 +297,4 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 | Phase 6 — Production Polish | 13 | 25 | 52% |
 | **Total** | **66** | **78** | **~85%** |
 
-Production readiness: ~85%. Day 1 (platform polish) and Day 2 (robustness) are done — bundle ID renamed to `com.speedread.app`, app icon + native splash generated, both platform notification permissions declared, `zonedSchedule` time-of-day reminders wired, [PRIVACY.md](PRIVACY.md) drafted, DB-open + home-load error states with retry buttons, all visible stubs unwired (code preserved). Remaining for beta: streak minutes (6.11), empty-state polish (6.13), accessibility (6.16), real visual assets, store screenshots + metadata, TestFlight / Play Internal submission.
+Production readiness: ~85%. Day 1 (platform polish) and Day 2 (robustness) are done — bundle ID renamed to `dev.needforge.speedread`, app icon + native splash generated, both platform notification permissions declared, `zonedSchedule` time-of-day reminders wired, [PRIVACY.md](PRIVACY.md) drafted, DB-open + home-load error states with retry buttons, all visible stubs unwired (code preserved). Remaining for beta: streak minutes (6.11), empty-state polish (6.13), accessibility (6.16), real visual assets, store screenshots + metadata, TestFlight / Play Internal submission.

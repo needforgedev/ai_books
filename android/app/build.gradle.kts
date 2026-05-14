@@ -19,7 +19,7 @@ if (hasReleaseSigning) {
 }
 
 android {
-    namespace = "com.speedread.app"
+    namespace = "dev.needforge.speedread"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -34,9 +34,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.speedread.app"
+        applicationId = "dev.needforge.speedread"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
