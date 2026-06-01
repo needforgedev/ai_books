@@ -153,6 +153,168 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 
 ---
 
+## Phase 7 — Knowledge & Retention (Future / Post-Beta)
+
+Goal: Turn passive reading into active recall. Users can quiz themselves on their saved notes, revisit ideas on a schedule, and discover connections between highlights across chapters and books — all offline, no AI required.
+
+> **Pre-condition:** Phase 6 must be complete (beta shipped). Phase 7 is a post-launch feature milestone.
+
+---
+
+### 7A — Quiz Mode (Personal Duolingo for Books)
+
+User marks a word or phrase in a saved note as a "blank". The app surfaces fill-in-the-blank cards from their own highlights. No AI — the user authors the gaps.
+
+**Schema additions** (`database_helper.dart` — bump DB version to 2):
+```sql
+CREATE TABLE quiz_cards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  saved_item_id INTEGER NOT NULL,          -- FK → saved_items.id
+  full_text TEXT NOT NULL,                 -- the original note/highlight
+  blank_start INTEGER NOT NULL,            -- char offset of the blanked word/phrase
+  blank_length INTEGER NOT NULL,           -- char length
+  correct_answer TEXT NOT NULL,            -- the hidden word/phrase
+  times_shown INTEGER DEFAULT 0,
+  times_correct INTEGER DEFAULT 0,
+  created_at TEXT,
+  FOREIGN KEY (saved_item_id) REFERENCES saved_items(id) ON DELETE CASCADE
+)
+```
+
+**New files:**
+- `lib/domain/models/quiz_card.dart` — plain Dart model with `toMap`/`fromMap`
+- `lib/domain/services/quiz_service.dart` — `createCard`, `getDueCards`, `recordAttempt`, `deleteCard`
+- `lib/features/quiz/screens/quiz_session_screen.dart` — swipeable card deck; shows context sentence with blank, text-field answer, reveal + correct/incorrect feedback
+- `lib/features/quiz/screens/quiz_setup_screen.dart` — pick which book/category to quiz from; shows card count + accuracy stats
+- `lib/features/saved/widgets/create_quiz_card_sheet.dart` — bottom sheet opened from long-press on a saved item; user taps the word/phrase to blank, confirms
+
+**Navigation:** Long-press any saved item in `bookmarks_screen.dart` → "Make a quiz card" → `CreateQuizCardSheet`. Quiz entry point added to Profile tab stats area or as a dedicated action on the Saved tab header.
+
+**Tasks:**
+- [ ] 7A.1 Schema — add `quiz_cards` table, bump DB version, write migration in `onUpgrade`
+- [ ] 7A.2 `QuizCard` model — plain Dart, `toMap`/`fromMap`
+- [ ] 7A.3 `QuizService` — CRUD + `getDueCards(bookId)` + `recordAttempt(id, wasCorrect)`
+- [ ] 7A.4 `CreateQuizCardSheet` — bottom sheet, tap-to-select blank within the saved text, confirm saves row
+- [ ] 7A.5 Wire long-press on saved items in `bookmarks_screen.dart` to open `CreateQuizCardSheet`
+- [ ] 7A.6 `QuizSetupScreen` — filter by book/all, show pending card count + all-time accuracy
+- [ ] 7A.7 `QuizSessionScreen` — card deck UI, fill-in-blank input, reveal answer, correct/incorrect tap, session summary at the end
+- [ ] 7A.8 Entry point — "Quiz yourself" button on Saved tab header (only visible when user has ≥1 quiz card)
+
+---
+
+### 7B — Spaced Repetition & Revisit Rewards
+
+Cards from 7A (and bookmarked highlights generally) are scheduled for review using a simple fixed-interval spaced repetition algorithm (no Anki complexity — just 3 buckets: Again / Soon / Later). XP is awarded per session and surfaces on the Profile streak area.
+
+**Schema additions** (same DB v2 migration):
+```sql
+ALTER TABLE saved_items ADD COLUMN next_review_at TEXT;
+ALTER TABLE saved_items ADD COLUMN review_interval_days INTEGER DEFAULT 1;
+ALTER TABLE saved_items ADD COLUMN review_bucket INTEGER DEFAULT 0;
+-- bucket: 0=new, 1=again(1d), 2=soon(3d), 3=later(7d)
+
+CREATE TABLE review_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  cards_reviewed INTEGER DEFAULT 0,
+  cards_correct INTEGER DEFAULT 0,
+  xp_earned INTEGER DEFAULT 0,
+  created_at TEXT
+)
+```
+
+**New files:**
+- `lib/domain/services/review_service.dart` — `getDueItems(limit)`, `recordReview(savedItemId, bucket)`, `getTodayXP`, `getLifetimeXP`
+- `lib/features/review/screens/review_session_screen.dart` — same card-deck UI as quiz but shows the full saved text; user self-rates Again / Soon / Later; session ends with XP earned summary
+
+**Rewards surface:** Profile screen shows a new "Revisit XP" stat alongside the streak. A small badge on the Saved tab icon when reviews are due.
+
+**Tasks:**
+- [ ] 7B.1 Schema — `ALTER TABLE` for `next_review_at`, `review_interval_days`, `review_bucket` on `saved_items`; add `review_sessions` table
+- [ ] 7B.2 `ReviewService` — `getDueItems`, `recordReview` (updates interval + next date), `getTodayXP`, `getLifetimeXP`
+- [ ] 7B.3 `ReviewSessionScreen` — card deck, full text display, Again / Soon / Later buttons, session summary with XP earned
+- [ ] 7B.4 Badge on Saved tab when reviews due — `FloatingTabBar` reads `ReviewService.getDueItems(limit: 1)` count
+- [ ] 7B.5 Revisit XP stat on Profile screen — new row in the stats grid, wired to `ReviewService.getLifetimeXP`
+- [ ] 7B.6 Notification hook — daily reminder fires at 20:00 only if there are due review cards (check count before scheduling)
+
+---
+
+### 7C — Note Cross-Linking (Patterns Across Books)
+
+User can link any two saved items together — across chapters, across books. Links have an optional label ("same idea", "contradicts", "builds on"). A "Connections" view on the Saved tab shows clusters of linked notes.
+
+**Schema additions** (same DB v2 migration):
+```sql
+CREATE TABLE note_links (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_saved_item_id INTEGER NOT NULL,
+  to_saved_item_id INTEGER NOT NULL,
+  label TEXT,                              -- optional: "same idea", "contradicts", "builds on"
+  created_at TEXT,
+  FOREIGN KEY (from_saved_item_id) REFERENCES saved_items(id) ON DELETE CASCADE,
+  FOREIGN KEY (to_saved_item_id) REFERENCES saved_items(id) ON DELETE CASCADE
+)
+```
+
+**New files:**
+- `lib/domain/models/note_link.dart` — plain Dart model
+- `lib/domain/services/note_link_service.dart` — `createLink`, `getLinksForItem`, `getAllLinkedClusters`, `deleteLink`
+- `lib/features/saved/screens/connections_screen.dart` — grouped list of linked note clusters; each cluster shows the saved items + their source book/chapter; tap to expand
+- `lib/features/saved/widgets/link_picker_sheet.dart` — bottom sheet to pick a second saved item to link to; searchable by book title or note text; optional label selector
+
+**Navigation:** Long-press saved item → "Link to another note" → `LinkPickerSheet`. "Connections" tab or toggle added inside `bookmarks_screen.dart` (tab row: Saved | Connections).
+
+**Tasks:**
+- [ ] 7C.1 Schema — `note_links` table in DB v2 migration
+- [ ] 7C.2 `NoteLink` model — plain Dart, `toMap`/`fromMap`
+- [ ] 7C.3 `NoteLinkService` — `createLink`, `getLinksForItem(id)`, `getAllLinkedClusters`, `deleteLink`
+- [ ] 7C.4 `LinkPickerSheet` — searchable bottom sheet, pick target saved item, optional label chips (Same idea / Contradicts / Builds on / Custom)
+- [ ] 7C.5 Wire long-press on saved items to show action menu (Quiz card + Link note) — replaces the single long-press from 7A.5
+- [ ] 7C.6 `ConnectionsScreen` — grouped clusters view; each cluster is a card showing all linked notes with source book + chapter labels
+- [ ] 7C.7 Tab toggle in `bookmarks_screen.dart` — "Saved" and "Connections" as a segmented row at the top
+
+---
+
+### Phase 7 — DB Migration Strategy
+
+All three sub-phases share a single DB version bump (v1 → v2). The migration runs in `onUpgrade` inside `database_helper.dart`:
+
+```dart
+onUpgrade: (db, oldVersion, newVersion) async {
+  if (oldVersion < 2) {
+    // 7A
+    await db.execute('CREATE TABLE quiz_cards (...)');
+    // 7B
+    await db.execute('ALTER TABLE saved_items ADD COLUMN next_review_at TEXT');
+    await db.execute('ALTER TABLE saved_items ADD COLUMN review_interval_days INTEGER DEFAULT 1');
+    await db.execute('ALTER TABLE saved_items ADD COLUMN review_bucket INTEGER DEFAULT 0');
+    await db.execute('CREATE TABLE review_sessions (...)');
+    // 7C
+    await db.execute('CREATE TABLE note_links (...)');
+  }
+}
+```
+
+- [ ] 7D.1 Write `onUpgrade` handler in `database_helper.dart` covering all v2 additions
+- [ ] 7D.2 Bump `version: 1` → `version: 2` in `openDatabase` call
+- [ ] 7D.3 Test upgrade path on a device that already has v1 data (no data loss)
+
+---
+
+### Phase 7 — Progress Summary (Future)
+
+| Sub-phase | Items | Status |
+|---|---|---|
+| 7A — Quiz Mode | 8 tasks | Not started |
+| 7B — Spaced Repetition & Rewards | 6 tasks | Not started |
+| 7C — Note Cross-Linking | 7 tasks | Not started |
+| 7D — DB Migration | 3 tasks | Not started |
+| **Total** | **24 tasks** | **0%** |
+
+> Suggested order: 7D (migration foundation) → 7A (quiz cards, standalone value) → 7B (adds scheduling layer on top of 7A) → 7C (independent, can be built in parallel with 7B)
+
+---
+
 ## Content Tracker
 
 - [x] Science — 3 books, 12 checkpoints (Brief History of Time, Sapiens, The Selfish Gene)
@@ -295,6 +457,7 @@ Goal: App feels finished. Edge cases handled. Ready for store submission.
 | Phase 4 — Retention | 8 | 8 | 100% |
 | Phase 5 — Visuals Infrastructure | 9 | 9 | 100% |
 | Phase 6 — Production Polish | 13 | 25 | 52% |
-| **Total** | **66** | **78** | **~85%** |
+| Phase 7 — Knowledge & Retention | 0 | 24 | 0% (post-beta) |
+| **Total (excl. Phase 7)** | **66** | **78** | **~85%** |
 
 Production readiness: ~85%. Day 1 (platform polish) and Day 2 (robustness) are done — bundle ID renamed to `dev.needforge.speedread`, app icon + native splash generated, both platform notification permissions declared, `zonedSchedule` time-of-day reminders wired, [PRIVACY.md](PRIVACY.md) drafted, DB-open + home-load error states with retry buttons, all visible stubs unwired (code preserved). Remaining for beta: streak minutes (6.11), empty-state polish (6.13), accessibility (6.16), real visual assets, store screenshots + metadata, TestFlight / Play Internal submission.
