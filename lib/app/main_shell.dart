@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ai_books/app/theme/app_colors.dart';
 import 'package:ai_books/core/widgets/floating_tab_bar.dart';
+import 'package:ai_books/domain/services/quiz_service.dart';
 import 'package:ai_books/features/home/screens/home_screen.dart';
 import 'package:ai_books/features/library/screens/library_screen.dart';
 import 'package:ai_books/features/bookmarks/screens/bookmarks_screen.dart';
@@ -32,9 +33,22 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+  bool _hasDueCards = false;
 
   // Bumped each time the Saved tab is tapped — BookmarksScreen listens and reloads.
   final ValueNotifier<int> _bookmarksRefresh = ValueNotifier<int>(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _checkDueCards();
+  }
+
+  Future<void> _checkDueCards() async {
+    final count = await QuizService.getDueCardCount();
+    if (!mounted) return;
+    setState(() => _hasDueCards = count > 0);
+  }
 
   late final List<Widget> _screens = [
     const HomeScreen(),
@@ -47,6 +61,8 @@ class _MainShellState extends State<MainShell> {
     setState(() => _currentIndex = i);
     if (i == MainShellTabs.saved) {
       _bookmarksRefresh.value++;
+      // Clear badge when user visits the saved tab
+      if (_hasDueCards) setState(() => _hasDueCards = false);
     }
   }
 
@@ -85,6 +101,7 @@ class _MainShellState extends State<MainShell> {
               child: FloatingTabBar(
                 currentIndex: _currentIndex,
                 onTap: _onTabTap,
+                badgeIndices: _hasDueCards ? {MainShellTabs.saved} : {},
               ),
             ),
           ),

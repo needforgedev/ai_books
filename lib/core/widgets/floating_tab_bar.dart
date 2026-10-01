@@ -11,11 +11,14 @@ class FloatingTabBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     this.accent = AppColors.primary,
+    this.badgeIndices = const {},
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final Color accent;
+  /// Tab indices (0-based) that should show a red dot badge.
+  final Set<int> badgeIndices;
 
   static const _tabs = [
     _TabItem('Home', Icons.home_rounded),
@@ -69,6 +72,7 @@ class FloatingTabBar extends StatelessWidget {
                     icon: tab.icon,
                     active: active,
                     accent: accent,
+                    hasBadge: badgeIndices.contains(i),
                     onTap: () => onTap(i),
                   );
                 }),
@@ -94,6 +98,7 @@ class _TabButton extends StatelessWidget {
     required this.active,
     required this.accent,
     required this.onTap,
+    this.hasBadge = false,
   });
 
   final String label;
@@ -101,6 +106,7 @@ class _TabButton extends StatelessWidget {
   final bool active;
   final Color accent;
   final VoidCallback onTap;
+  final bool hasBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -116,28 +122,46 @@ class _TabButton extends StatelessWidget {
           color: active ? accent : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: active
-                  ? AppColors.textOnPrimary
-                  : AppColors.textSecondary.withValues(alpha: 0.55),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: active
+                      ? AppColors.textOnPrimary
+                      : AppColors.textSecondary.withValues(alpha: 0.55),
+                ),
+                if (active) ...[
+                  const SizedBox(width: 7),
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.1,
+                      color: AppColors.textOnPrimary,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            if (active) ...[
-              const SizedBox(width: 7),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.1,
-                  color: AppColors.textOnPrimary,
+            if (hasBadge && !active)
+              Positioned(
+                top: -3,
+                right: -3,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            ],
           ],
         ),
       ),

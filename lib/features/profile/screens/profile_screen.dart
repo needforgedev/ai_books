@@ -7,6 +7,7 @@ import 'package:ai_books/app/theme/app_typography.dart';
 import 'package:ai_books/core/storage/database_helper.dart';
 import 'package:ai_books/core/widgets/radial_glow.dart';
 import 'package:ai_books/domain/services/content_service.dart';
+import 'package:ai_books/domain/services/quiz_service.dart';
 import 'package:ai_books/domain/services/streak_service.dart';
 import 'package:ai_books/features/profile/screens/edit_interests_screen.dart';
 import 'package:ai_books/features/settings/screens/settings_screen.dart';
@@ -36,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _todayIndex = 0;
   // Per-category progress: list of (categoryTitle, accent, pct)
   List<_CategoryProgress> _categoryProgress = [];
+  int _reviewXP = 0;
 
   @override
   void initState() {
@@ -81,6 +83,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Category progress
     _categoryProgress = await _loadCategoryProgress(db);
+
+    // Quiz XP
+    _reviewXP = await QuizService.getLifetimeXP();
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -342,6 +347,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
+            if (_reviewXP > 0) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _StatTile(
+                  icon: Icons.bolt_rounded,
+                  iconColor: AppColors.warning,
+                  value: '$_reviewXP XP',
+                  label: 'review score',
+                  wide: true,
+                ),
+              ),
+            ],
             const SizedBox(height: 22),
 
             // ===== Streak calendar =====
@@ -468,23 +486,48 @@ class _StatTile extends StatelessWidget {
     required this.iconColor,
     required this.value,
     required this.label,
+    this.wide = false,
   });
 
   final IconData icon;
   final Color iconColor;
   final String value;
   final String label;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final tile = Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
       decoration: BoxDecoration(
         color: const Color(0x08FFFFFF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderSubtle),
       ),
-      child: Column(
+      child: wide
+          ? Row(
+              children: [
+                Icon(icon, size: 16, color: iconColor),
+                const SizedBox(width: 12),
+                Text(
+                  value,
+                  style: AppTypography.tileHeading.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: AppTypography.micro.copyWith(
+                    color: AppColors.textTertiary,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            )
+          : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 16, color: iconColor),
@@ -508,6 +551,7 @@ class _StatTile extends StatelessWidget {
         ],
       ),
     );
+    return wide ? SizedBox(width: double.infinity, child: tile) : tile;
   }
 }
 

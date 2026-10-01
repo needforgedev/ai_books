@@ -1,6 +1,8 @@
 export 'book_entry.dart';
 export 'category_entry.dart';
 export 'checkpoint_entry.dart';
+export 'note_link.dart';
+export 'quiz_card.dart';
 export 'reading_progress.dart';
 export 'saved_item.dart';
 export 'streak_record.dart';

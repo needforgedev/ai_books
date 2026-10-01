@@ -20,8 +20,9 @@ class DatabaseHelper {
     final path = join(dbPath, 'ai_books.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -155,8 +156,67 @@ class DatabaseHelper {
     await db.execute(
         'CREATE INDEX idx_streak_records_date ON streak_records(date)');
 
+    await _createRetentionTables(db);
+
     // Seed initial data
     await SeedLoader.seedIfNeeded(db);
+  }
+
+  Future<void> _createRetentionTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE quiz_cards (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        saved_item_id INTEGER NOT NULL,
+        full_text TEXT NOT NULL,
+        blank_start INTEGER NOT NULL,
+        blank_length INTEGER NOT NULL,
+        correct_answer TEXT NOT NULL,
+        times_shown INTEGER DEFAULT 0,
+        times_correct INTEGER DEFAULT 0,
+        next_review_at TEXT,
+        review_bucket INTEGER DEFAULT 0,
+        created_at TEXT,
+        FOREIGN KEY (saved_item_id) REFERENCES saved_items(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE review_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        cards_reviewed INTEGER DEFAULT 0,
+        cards_correct INTEGER DEFAULT 0,
+        xp_earned INTEGER DEFAULT 0,
+        created_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE note_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_saved_item_id INTEGER NOT NULL,
+        to_saved_item_id INTEGER NOT NULL,
+        label TEXT,
+        created_at TEXT,
+        FOREIGN KEY (from_saved_item_id) REFERENCES saved_items(id) ON DELETE CASCADE,
+        FOREIGN KEY (to_saved_item_id) REFERENCES saved_items(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute(
+        'CREATE INDEX idx_quiz_cards_saved_item ON quiz_cards(saved_item_id)');
+    await db.execute(
+        'CREATE INDEX idx_quiz_cards_next_review ON quiz_cards(next_review_at)');
+    await db.execute(
+        'CREATE INDEX idx_note_links_from ON note_links(from_saved_item_id)');
+    await db.execute(
+        'CREATE INDEX idx_note_links_to ON note_links(to_saved_item_id)');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await _createRetentionTables(db);
+    }
   }
 
   Future<bool> isOnboardingComplete() async {
